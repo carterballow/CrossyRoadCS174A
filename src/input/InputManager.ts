@@ -1,0 +1,29 @@
+export class InputManager {
+  private pressed = new Set<string>();
+  private consumed = new Set<string>();
+
+  constructor() {
+    window.addEventListener('keydown', (e) => {
+      const key = e.key.toLowerCase();
+      if (!this.pressed.has(key)) {
+        this.pressed.add(key);
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      const key = e.key.toLowerCase();
+      this.pressed.delete(key);
+      this.consumed.delete(key);
+    });
+  }
+
+  // Returns true once per physical press — ignores held keys. 
+  justPressed(key: string): boolean {
+    const k = key.toLowerCase();
+    if (this.pressed.has(k) && !this.consumed.has(k)) {
+      this.consumed.add(k);
+      return true;
+    }
+    return false;
+  }
+}
