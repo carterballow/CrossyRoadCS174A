@@ -95,21 +95,20 @@ export class Game {
     this.sceneMgr.render();
   };
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
->>>>>>> Stashed changes
-=======
-<<<<<<< HEAD
->>>>>>> Stashed changes
-    private handleInput(): void {
-    if (this.input.justPressed('w')) this.tryMovePlayer(0, 1);
-    else if (this.input.justPressed('s')) this.tryMovePlayer(0, -1);
-    else if (this.input.justPressed('a')) this.tryMovePlayer(1, 0);
-    else if (this.input.justPressed('d')) this.tryMovePlayer(-1, 0);
+  private handleInput(): void {
+  if (this.input.justPressed('w') || this.input.justPressed('ArrowUp')) {
+    this.tryMovePlayer(0, 1);
   }
-
+  else if (this.input.justPressed('s') || this.input.justPressed('ArrowDown')) {
+    this.tryMovePlayer(0, -1);
+  }
+  else if (this.input.justPressed('a') || this.input.justPressed('ArrowLeft')) {
+    this.tryMovePlayer(1, 0);
+  }
+  else if (this.input.justPressed('d') || this.input.justPressed('ArrowRight')) {
+    this.tryMovePlayer(-1, 0);
+  }
+}
   private tryMovePlayer(dx: number, dz: number): void {
     const targetX = Math.round(this.player.position.x) + dx;
     const targetZ = Math.round(this.player.position.z) + dz;
@@ -141,22 +140,6 @@ export class Game {
         this.player.position.set(0, this.player.position.y, 0);
       }
     }
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> Stashed changes
-=======
-  private handleInput(): void {
-    if (this.input.justPressed('w') || this.input.justPressed('arrowup')) this.player.tryMove(0, 1);
-    else if (this.input.justPressed('s') || this.input.justPressed('arrowdown')) this.player.tryMove(0, -1);
-    else if (this.input.justPressed('a') || this.input.justPressed('arrowleft')) this.player.tryMove(1, 0);
-    else if (this.input.justPressed('d') || this.input.justPressed('arrowright')) this.player.tryMove(-1, 0);
->>>>>>> 40d63ece05ab01cf8532de0d0ebc8bce9238fd3f
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
   }
 
   private updateCamera(): void {
