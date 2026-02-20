@@ -5,6 +5,9 @@ export class InputManager {
   constructor() {
     window.addEventListener('keydown', (e) => {
       const key = e.key.toLowerCase();
+      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
+        e.preventDefault();
+      }
       if (!this.pressed.has(key)) {
         this.pressed.add(key);
       }

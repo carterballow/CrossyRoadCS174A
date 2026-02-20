@@ -97,10 +97,10 @@ export class Game {
   };
 
   private handleInput(): void {
-    if (this.input.justPressed('w')) this.player.tryMove(0, 1);
-    else if (this.input.justPressed('s')) this.player.tryMove(0, -1);
-    else if (this.input.justPressed('a')) this.player.tryMove(1, 0);
-    else if (this.input.justPressed('d')) this.player.tryMove(-1, 0);
+    if (this.input.justPressed('w') || this.input.justPressed('arrowup')) this.player.tryMove(0, 1);
+    else if (this.input.justPressed('s') || this.input.justPressed('arrowdown')) this.player.tryMove(0, -1);
+    else if (this.input.justPressed('a') || this.input.justPressed('arrowleft')) this.player.tryMove(1, 0);
+    else if (this.input.justPressed('d') || this.input.justPressed('arrowright')) this.player.tryMove(-1, 0);
   }
 
   private updateCamera(): void {
