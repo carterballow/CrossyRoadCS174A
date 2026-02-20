@@ -94,13 +94,21 @@ export class Game {
     this.updateCamera();
     this.sceneMgr.render();
   };
-    private handleInput(): void {
-    if (this.input.justPressed('w')) this.tryMovePlayer(0, 1);
-    else if (this.input.justPressed('s')) this.tryMovePlayer(0, -1);
-    else if (this.input.justPressed('a')) this.tryMovePlayer(1, 0);
-    else if (this.input.justPressed('d')) this.tryMovePlayer(-1, 0);
-  }
 
+  private handleInput(): void {
+    if (this.input.justPressed('w') || this.input.justPressed('ArrowUp')) {
+      this.tryMovePlayer(0, -1);
+    }
+    else if (this.input.justPressed('s') || this.input.justPressed('ArrowDown')) {
+      this.tryMovePlayer(0, -1);
+    }
+    else if (this.input.justPressed('a') || this.input.justPressed('ArrowLeft')) {
+      this.tryMovePlayer(1, 0);
+    }
+    else if (this.input.justPressed('d') || this.input.justPressed('ArrowRight')) {
+      this.tryMovePlayer(-1, 0);
+    }
+  }
   private tryMovePlayer(dx: number, dz: number): void {
     const targetX = Math.round(this.player.position.x) + dx;
     const targetZ = Math.round(this.player.position.z) + dz;
@@ -114,7 +122,7 @@ export class Game {
       // 
       this.player.position.copy(oldPos);
 
-      if (blocked) return; 
+      if (blocked) return;
     }
     this.player.move(dx, dz);
   }
