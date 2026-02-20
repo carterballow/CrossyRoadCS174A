@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Lane, LANE_WIDTH } from './Lane';
 import { Car } from '../entities/Car';
+import {Player} from "../entities/Player";
 
 export class RoadLane extends Lane {
   private cars: Car[] = [];
@@ -35,6 +36,23 @@ export class RoadLane extends Lane {
       this.mesh.add(car.mesh);
       this.cars.push(car);
     }
+  }
+  checkCollision(player: Player): boolean {
+    const pz = Math.round(player.position.z);
+    if (pz !== this.zIndex) return false;
+    const px = player.position.x;
+
+    const player_half = 0.35; //change later
+    const car_half = 1.0;
+
+    for (const car of this.cars) {
+      const cx = car.mesh.position.x; 
+      if (Math.abs(px - cx) <= (player_half + car_half)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   update(delta: number): void {

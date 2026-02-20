@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Lane, LANE_WIDTH } from './Lane';
 import { Train } from '../entities/Train';
+import {Player} from "../entities/Player";
 
 export class RailwayLane extends Lane {
   private train: Train;
@@ -44,6 +45,19 @@ export class RailwayLane extends Lane {
     const sig2 = this.train.signalLight; // original
     sig2.position.set(LANE_WIDTH / 2 - 0.5, 0.3, 0);
     this.mesh.add(sig2);
+  }
+
+  checkCollision(player: Player): boolean {
+    const pz = Math.round(player.position.z);
+    if (pz !== this.zIndex) return false;
+
+    const px = player.position.x;        
+    const tx = this.train.mesh.position.x;  
+
+    const train_half = 2.5; // both
+    const player_half = 0.3; // need to be fine tuned
+
+    return Math.abs(px - tx) <= (train_half + player_half);
   }
 
   update(delta: number): void {

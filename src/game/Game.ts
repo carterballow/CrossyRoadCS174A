@@ -10,10 +10,7 @@ import { RailwayLane } from '../lanes/RailwayLane';
 const CAM_OFFSET = new THREE.Vector3(0, 6, -8);
 const CAM_LOOK_OFFSET = new THREE.Vector3(0, 1, 4);
 
-/**
- * Hardcoded lane layout for now.
- * Format: [type, count]  — lays out `count` consecutive lanes of `type`.
- */
+
 const LANE_PATTERN: [string, number][] = [
   ['grass', 3],
   ['road', 3],
@@ -92,15 +89,74 @@ export class Game {
       lane.update(delta);
     }
 
+    this.checkDeathCollisions();
+
     this.updateCamera();
     this.sceneMgr.render();
   };
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+>>>>>>> Stashed changes
+=======
+<<<<<<< HEAD
+>>>>>>> Stashed changes
+    private handleInput(): void {
+    if (this.input.justPressed('w')) this.tryMovePlayer(0, 1);
+    else if (this.input.justPressed('s')) this.tryMovePlayer(0, -1);
+    else if (this.input.justPressed('a')) this.tryMovePlayer(1, 0);
+    else if (this.input.justPressed('d')) this.tryMovePlayer(-1, 0);
+  }
+
+  private tryMovePlayer(dx: number, dz: number): void {
+    const targetX = Math.round(this.player.position.x) + dx;
+    const targetZ = Math.round(this.player.position.z) + dz;
+    const lane = this.getLaneAtZ(targetZ);
+    if (lane && lane.type === 'grass') {
+      const oldPos = this.player.position.clone();
+      this.player.position.set(targetX, oldPos.y, targetZ);
+
+      const blocked = lane.checkCollision(this.player);
+
+      // 
+      this.player.position.copy(oldPos);
+
+      if (blocked) return; 
+    }
+    this.player.move(dx, dz);
+  }
+
+  private getLaneAtZ(z: number): Lane | undefined {
+    return this.lanes.find((l) => l.zIndex === z);
+  }
+
+  private checkDeathCollisions(): void {
+    const currentZ = Math.round(this.player.position.z);
+    const lane = this.getLaneAtZ(currentZ);
+    if (!lane) return;
+    if (lane.type === 'road' || lane.type === 'railway') {
+      if (lane.checkCollision(this.player)) {
+        this.player.position.set(0, this.player.position.y, 0);
+      }
+    }
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+=======
+>>>>>>> Stashed changes
+=======
   private handleInput(): void {
-    if (this.input.justPressed('w')) this.player.tryMove(0, 1);
-    else if (this.input.justPressed('s')) this.player.tryMove(0, -1);
-    else if (this.input.justPressed('a')) this.player.tryMove(1, 0);
-    else if (this.input.justPressed('d')) this.player.tryMove(-1, 0);
+    if (this.input.justPressed('w') || this.input.justPressed('arrowup')) this.player.tryMove(0, 1);
+    else if (this.input.justPressed('s') || this.input.justPressed('arrowdown')) this.player.tryMove(0, -1);
+    else if (this.input.justPressed('a') || this.input.justPressed('arrowleft')) this.player.tryMove(1, 0);
+    else if (this.input.justPressed('d') || this.input.justPressed('arrowright')) this.player.tryMove(-1, 0);
+>>>>>>> 40d63ece05ab01cf8532de0d0ebc8bce9238fd3f
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
   }
 
   private updateCamera(): void {
