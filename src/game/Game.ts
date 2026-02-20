@@ -97,7 +97,7 @@ export class Game {
 
   private handleInput(): void {
     if (this.input.justPressed('w') || this.input.justPressed('ArrowUp')) {
-      this.tryMovePlayer(0, -1);
+      this.tryMovePlayer(0, 1);
     }
     else if (this.input.justPressed('s') || this.input.justPressed('ArrowDown')) {
       this.tryMovePlayer(0, -1);
