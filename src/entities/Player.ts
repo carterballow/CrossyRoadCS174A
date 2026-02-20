@@ -54,7 +54,7 @@ export class Player extends Entity {
     return this.mesh.position;
   }
 
-  tryMove(dx: number, dz: number): void {
+  move(dx: number, dz: number): void {
     if (this.isMoving) return;
 
     this.currentPos.copy(this.mesh.position);

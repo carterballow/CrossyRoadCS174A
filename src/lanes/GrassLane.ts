@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Lane, LANE_WIDTH } from './Lane';
 import { Tree } from '../entities/Tree';
+import {Player} from "../entities/Player";
 
 export class GrassLane extends Lane {
   private trees: Tree[] = [];
@@ -30,6 +31,19 @@ export class GrassLane extends Lane {
       this.mesh.add(tree.mesh);
       this.trees.push(tree);
     }
+  }
+
+  checkCollision(player: Player): boolean {
+    const pz = Math.round(player.position.z);
+    if (pz !== this.zIndex) return false;
+
+    const px = Math.round(player.position.x);
+
+    for (const tree of this.trees) {
+      const tx = Math.round(tree.mesh.position.x);
+      if (tx === px) return true;
+    }
+    return false;
   }
 
   private randomTreePositions(): number[] {

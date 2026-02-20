@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-
+import {Player} from "../entities/Player";
 export const LANE_WIDTH = 20;
 
 export type LaneType = 'grass' | 'road' | 'railway';
@@ -26,7 +26,9 @@ export abstract class Lane {
   }
 
   abstract update(delta: number): void;
-
+  abstract checkCollision(player: Player): 
+  boolean;
+  
   dispose(): void {
     this.mesh.traverse((child) => {
       if (child instanceof THREE.Mesh) {
