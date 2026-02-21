@@ -11,41 +11,28 @@ import { HUD } from '../ui/HUD';
 const CAM_OFFSET = new THREE.Vector3(0, 6, -8);
 const CAM_LOOK_OFFSET = new THREE.Vector3(0, 1, 4);
 
-type GameState = 'menu' | 'playing' | 'dead';
+const LANES_AHEAD = 20;
+const LANES_BEHIND = 8;
 
-const LANE_PATTERN: [string, number][] = [
-  ['grass', 3],
-  ['road', 3],
-  ['grass', 2],
-  ['railway', 1],
-  ['grass', 2],
-  ['road', 4],
-  ['grass', 1],
-  ['railway', 1],
-  ['grass', 2],
-  ['road', 2],
-  ['grass', 3],
-  ['railway', 1],
-  ['road', 3],
-  ['grass', 2],
-  ['road', 2],
-  ['grass', 1],
-  ['railway', 1],
-  ['grass', 3],
-];
+type GameState = 'menu' | 'playing' | 'dead';
 
 export class Game {
   private sceneMgr: SceneManager;
   private input: InputManager;
   private player: Player;
-  private lanes: Lane[] = [];
+  private laneMap = new Map<number, Lane>();
   private clock = new THREE.Clock();
   private hud: HUD;
 
   private state: GameState = 'menu';
   private score = 0;
   private highScore = 0;
-  private maxZ = 0; // furthest z reached
+  private maxZ = 0;
+
+  // Procedural generation state
+  private nextLaneZ = 0;
+  private lastLaneType = 'grass';
+  private consecutiveCount = 0;
 
   constructor() {
     this.sceneMgr = new SceneManager();
@@ -54,7 +41,7 @@ export class Game {
 
     this.highScore = this.loadHighScore();
 
-    this.buildLanes();
+    this.initLanes();
 
     this.player = new Player();
     this.sceneMgr.scene.add(this.player.mesh);
@@ -63,24 +50,86 @@ export class Game {
     this.hud.setHighScore(this.highScore);
   }
 
-  private buildLanes(): void {
-    let z = -5;
-    for (const [type, count] of LANE_PATTERN) {
-      for (let i = 0; i < count; i++) {
-        const lane = this.createLane(type, z);
-        this.lanes.push(lane);
-        this.sceneMgr.scene.add(lane.mesh);
-        z++;
+  private initLanes(): void {
+    this.nextLaneZ = -LANES_BEHIND;
+    this.lastLaneType = 'grass';
+    this.consecutiveCount = 0;
+    this.generateLanesUpTo(LANES_AHEAD);
+  }
+
+  private generateLanesUpTo(targetZ: number): void {
+    while (this.nextLaneZ <= targetZ) {
+      const z = this.nextLaneZ;
+      const type = this.pickLaneType(z);
+      const lane = this.createLane(type, z);
+      this.laneMap.set(z, lane);
+      this.sceneMgr.scene.add(lane.mesh);
+
+      this.lastLaneType = type;
+      this.nextLaneZ++;
+    }
+  }
+
+  private pickLaneType(z: number): string {
+    // Safe starting area
+    if (z >= -2 && z <= 2) return 'grass';
+
+    // After a road/railway run, force at least 1 grass
+    if (this.lastLaneType !== 'grass' && this.consecutiveCount >= 1) {
+      // Chance to keep going or force grass
+      if (this.consecutiveCount >= 4 || Math.random() < 0.4) {
+        this.consecutiveCount = 1;
+        return 'grass';
+      }
+    }
+
+    // If we've had grass for a while, pick something else
+    if (this.lastLaneType === 'grass' && this.consecutiveCount >= 2) {
+      const r = Math.random();
+      if (r < 0.6) {
+        this.consecutiveCount = 1;
+        return 'road';
+      } else if (r < 0.85) {
+        this.consecutiveCount = 1;
+        return 'railway';
+      }
+      // else stay grass
+    }
+
+    // Default weighted random
+    const r = Math.random();
+    if (r < 0.35) {
+      if (this.lastLaneType !== 'grass') this.consecutiveCount = 1;
+      else this.consecutiveCount++;
+      return 'grass';
+    } else if (r < 0.75) {
+      if (this.lastLaneType !== 'road') this.consecutiveCount = 1;
+      else this.consecutiveCount++;
+      return 'road';
+    } else {
+      if (this.lastLaneType !== 'railway') this.consecutiveCount = 1;
+      else this.consecutiveCount++;
+      return 'railway';
+    }
+  }
+
+  private pruneLanesBehind(playerZ: number): void {
+    const minZ = playerZ - LANES_BEHIND;
+    for (const [z, lane] of this.laneMap) {
+      if (z < minZ) {
+        this.sceneMgr.scene.remove(lane.mesh);
+        lane.dispose();
+        this.laneMap.delete(z);
       }
     }
   }
 
   private clearLanes(): void {
-    for (const lane of this.lanes) {
+    for (const [, lane] of this.laneMap) {
       this.sceneMgr.scene.remove(lane.mesh);
       lane.dispose();
     }
-    this.lanes = [];
+    this.laneMap.clear();
   }
 
   private createLane(type: string, z: number): Lane {
@@ -106,8 +155,7 @@ export class Game {
 
     if (this.state === 'menu') {
       this.handleMenuInput();
-      // Still animate lanes in background
-      for (const lane of this.lanes) lane.update(delta);
+      for (const [, lane] of this.laneMap) lane.update(delta);
       this.updateCamera();
       this.sceneMgr.render();
       return;
@@ -115,7 +163,6 @@ export class Game {
 
     if (this.state === 'dead') {
       this.handleDeadInput();
-      // Keep rendering but freeze gameplay
       this.updateCamera();
       this.sceneMgr.render();
       return;
@@ -125,16 +172,23 @@ export class Game {
     this.handleInput();
     this.player.update(delta);
 
-    for (const lane of this.lanes) {
+    for (const [, lane] of this.laneMap) {
       lane.update(delta);
     }
 
     this.updateScore();
+    this.manageLanes();
     this.checkDeathCollisions();
 
     this.updateCamera();
     this.sceneMgr.render();
   };
+
+  private manageLanes(): void {
+    const playerZ = Math.round(this.player.position.z);
+    this.generateLanesUpTo(playerZ + LANES_AHEAD);
+    this.pruneLanesBehind(playerZ);
+  }
 
   private handleMenuInput(): void {
     if (this.input.anyJustPressed()) {
@@ -151,7 +205,7 @@ export class Game {
 
   private restart(): void {
     this.clearLanes();
-    this.buildLanes();
+    this.initLanes();
 
     this.sceneMgr.scene.remove(this.player.mesh);
     this.player = new Player();
@@ -202,7 +256,7 @@ export class Game {
   private tryMovePlayer(dx: number, dz: number): void {
     const targetX = Math.round(this.player.position.x) + dx;
     const targetZ = Math.round(this.player.position.z) + dz;
-    const lane = this.getLaneAtZ(targetZ);
+    const lane = this.laneMap.get(targetZ);
     if (lane && lane.type === 'grass') {
       const oldPos = this.player.position.clone();
       this.player.position.set(targetX, oldPos.y, targetZ);
@@ -216,13 +270,9 @@ export class Game {
     this.player.move(dx, dz);
   }
 
-  private getLaneAtZ(z: number): Lane | undefined {
-    return this.lanes.find((l) => l.zIndex === z);
-  }
-
   private checkDeathCollisions(): void {
     const currentZ = Math.round(this.player.position.z);
-    const lane = this.getLaneAtZ(currentZ);
+    const lane = this.laneMap.get(currentZ);
     if (!lane) return;
     if (lane.type === 'road' || lane.type === 'railway') {
       if (lane.checkCollision(this.player)) {
