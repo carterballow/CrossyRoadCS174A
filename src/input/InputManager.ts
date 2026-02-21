@@ -20,12 +20,23 @@ export class InputManager {
     });
   }
 
-  // Returns true once per physical press — ignores held keys. 
+  // Returns true once per physical press — ignores held keys.
   justPressed(key: string): boolean {
     const k = key.toLowerCase();
     if (this.pressed.has(k) && !this.consumed.has(k)) {
       this.consumed.add(k);
       return true;
+    }
+    return false;
+  }
+
+  // Returns true if any key was just pressed (unconsumed).
+  anyJustPressed(): boolean {
+    for (const k of this.pressed) {
+      if (!this.consumed.has(k)) {
+        this.consumed.add(k);
+        return true;
+      }
     }
     return false;
   }
