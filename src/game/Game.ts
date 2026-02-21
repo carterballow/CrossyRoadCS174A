@@ -6,6 +6,7 @@ import { Lane } from '../lanes/Lane';
 import { GrassLane } from '../lanes/GrassLane';
 import { RoadLane } from '../lanes/RoadLane';
 import { RailwayLane } from '../lanes/RailwayLane';
+import { RiverLane } from '../lanes/RiverLane';
 import { HUD } from '../ui/HUD';
 
 const CAM_OFFSET = new THREE.Vector3(0, 6, -8);
@@ -86,26 +87,32 @@ export class Game {
     // If we've had grass for a while, pick something else
     if (this.lastLaneType === 'grass' && this.consecutiveCount >= 2) {
       const r = Math.random();
-      if (r < 0.6) {
+      if (r < 0.45) {
         this.consecutiveCount = 1;
         return 'road';
-      } else if (r < 0.85) {
+      } else if (r < 0.7) {
+        this.consecutiveCount = 1;
+        return 'river';
+      } else if (r < 0.9) {
         this.consecutiveCount = 1;
         return 'railway';
       }
-      // else stay grass
     }
 
     // Default weighted random
     const r = Math.random();
-    if (r < 0.35) {
+    if (r < 0.3) {
       if (this.lastLaneType !== 'grass') this.consecutiveCount = 1;
       else this.consecutiveCount++;
       return 'grass';
-    } else if (r < 0.75) {
+    } else if (r < 0.6) {
       if (this.lastLaneType !== 'road') this.consecutiveCount = 1;
       else this.consecutiveCount++;
       return 'road';
+    } else if (r < 0.82) {
+      if (this.lastLaneType !== 'river') this.consecutiveCount = 1;
+      else this.consecutiveCount++;
+      return 'river';
     } else {
       if (this.lastLaneType !== 'railway') this.consecutiveCount = 1;
       else this.consecutiveCount++;
@@ -138,6 +145,8 @@ export class Game {
         return new RoadLane(z);
       case 'railway':
         return new RailwayLane(z);
+      case 'river':
+        return new RiverLane(z);
       case 'grass':
       default:
         return new GrassLane(z);
@@ -171,6 +180,7 @@ export class Game {
     // Playing state
     this.handleInput();
     this.player.update(delta);
+    this.handleLogRiding(delta);
 
     for (const [, lane] of this.laneMap) {
       lane.update(delta);
@@ -270,11 +280,28 @@ export class Game {
     this.player.move(dx, dz);
   }
 
+  private handleLogRiding(delta: number): void {
+    if (this.player.isMoving) return;
+    const currentZ = Math.round(this.player.position.z);
+    const lane = this.laneMap.get(currentZ);
+    if (lane && lane.type === 'river') {
+      const riverLane = lane as RiverLane;
+      if (riverLane.isOnLog(this.player)) {
+        this.player.position.x += riverLane.getLogVelocity() * delta;
+      }
+    }
+  }
+
   private checkDeathCollisions(): void {
     const currentZ = Math.round(this.player.position.z);
     const lane = this.laneMap.get(currentZ);
     if (!lane) return;
     if (lane.type === 'road' || lane.type === 'railway') {
+      if (lane.checkCollision(this.player)) {
+        this.die();
+      }
+    }
+    if (lane.type === 'river') {
       if (lane.checkCollision(this.player)) {
         this.die();
       }
