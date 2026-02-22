@@ -9,11 +9,11 @@ export class RoadLane extends Lane {
   constructor(zIndex: number, direction?: number, speed?: number, carCount?: number) {
     super('road', zIndex);
 
-    const strip = this.createStrip(0x616161);
+    const strip = this.createStrip(0x1a1a1a);
     this.mesh.add(strip);
 
     // dashed center line
-    const dashMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee });
+    const dashMat = new THREE.MeshStandardMaterial({ color: 0x555555 });
     const dashGeo = new THREE.PlaneGeometry(0.3, 0.06);
     for (let x = -LANE_WIDTH / 2; x < LANE_WIDTH / 2; x += 0.8) {
       const dash = new THREE.Mesh(dashGeo, dashMat);

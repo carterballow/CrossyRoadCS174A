@@ -9,13 +9,13 @@ export class GrassLane extends Lane {
   constructor(zIndex: number, treePositions?: number[]) {
     super('grass', zIndex);
 
-    // green strip
-    const strip = this.createStrip(0x4caf50);
+    // Dark grass strip
+    const strip = this.createStrip(0x1a3a1a);
     this.mesh.add(strip);
 
-    // subtle edge lines
+    // Subtle edge lines
     const edgeGeo = new THREE.PlaneGeometry(LANE_WIDTH, 0.04);
-    const edgeMat = new THREE.MeshStandardMaterial({ color: 0x388e3c });
+    const edgeMat = new THREE.MeshStandardMaterial({ color: 0x0f2a0f });
     for (const zOff of [-0.5, 0.5]) {
       const edge = new THREE.Mesh(edgeGeo, edgeMat);
       edge.rotation.x = -Math.PI / 2;

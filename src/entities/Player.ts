@@ -13,9 +13,13 @@ export class Player extends Entity {
   constructor() {
     const group = new THREE.Group();
 
-    // body
+    // body — slight emissive so player is visible at night
     const bodyGeo = new THREE.BoxGeometry(0.5, 0.6, 0.5);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: 0xeeeeee,
+      emissive: 0x333333,
+      emissiveIntensity: 0.3,
+    });
     const body = new THREE.Mesh(bodyGeo, bodyMat);
     body.position.y = 0.3;
     body.castShadow = true;
@@ -23,22 +27,38 @@ export class Player extends Entity {
 
     // head
     const headGeo = new THREE.BoxGeometry(0.4, 0.4, 0.4);
-    const headMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-    const head = new THREE.Mesh(headGeo, headMat);
+    const head = new THREE.Mesh(headGeo, bodyMat);
     head.position.y = 0.8;
     head.castShadow = true;
     group.add(head);
 
+    // eyes
+    const eyeMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+    const eyeGeo = new THREE.BoxGeometry(0.08, 0.08, 0.05);
+    for (const xOff of [-0.1, 0.1]) {
+      const eye = new THREE.Mesh(eyeGeo, eyeMat);
+      eye.position.set(xOff, 0.85, 0.2);
+      group.add(eye);
+    }
+
     // beak
     const beakGeo = new THREE.BoxGeometry(0.15, 0.1, 0.2);
-    const beakMat = new THREE.MeshStandardMaterial({ color: 0xff9800 });
+    const beakMat = new THREE.MeshStandardMaterial({
+      color: 0xff9800,
+      emissive: 0xff9800,
+      emissiveIntensity: 0.15,
+    });
     const beak = new THREE.Mesh(beakGeo, beakMat);
     beak.position.set(0, 0.75, 0.3);
     group.add(beak);
 
     // comb (red thing on top)
     const combGeo = new THREE.BoxGeometry(0.1, 0.15, 0.2);
-    const combMat = new THREE.MeshStandardMaterial({ color: 0xf44336 });
+    const combMat = new THREE.MeshStandardMaterial({
+      color: 0xf44336,
+      emissive: 0xf44336,
+      emissiveIntensity: 0.2,
+    });
     const comb = new THREE.Mesh(combGeo, combMat);
     comb.position.set(0, 1.05, 0);
     group.add(comb);

@@ -11,14 +11,14 @@ export class Log extends Entity {
     const group = new THREE.Group();
 
     const bodyGeo = new THREE.BoxGeometry(length, 0.3, 0.7);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x795548 });
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x3e2518 });
     const body = new THREE.Mesh(bodyGeo, bodyMat);
     body.position.y = 0.05;
     body.castShadow = true;
     group.add(body);
 
     // bark detail rings
-    const ringMat = new THREE.MeshStandardMaterial({ color: 0x5d4037 });
+    const ringMat = new THREE.MeshStandardMaterial({ color: 0x2a1508 });
     const ringGeo = new THREE.BoxGeometry(0.08, 0.32, 0.72);
     for (let i = -length / 2 + 0.3; i < length / 2; i += 0.6) {
       const ring = new THREE.Mesh(ringGeo, ringMat);

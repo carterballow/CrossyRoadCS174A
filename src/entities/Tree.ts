@@ -5,16 +5,16 @@ export class Tree extends Entity {
   constructor() {
     const group = new THREE.Group();
 
-    // trunk
+    // trunk — dark bark
     const trunkGeo = new THREE.BoxGeometry(0.2, 0.5, 0.2);
-    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x795548 });
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3e2723 });
     const trunk = new THREE.Mesh(trunkGeo, trunkMat);
     trunk.position.y = 0.25;
     trunk.castShadow = true;
     group.add(trunk);
 
-    // foliage — stacked cubes for that Crossy Road voxel look
-    const leafMat = new THREE.MeshStandardMaterial({ color: 0x2e7d32 });
+    // foliage — dark green silhouettes
+    const leafMat = new THREE.MeshStandardMaterial({ color: 0x0d3b0d });
 
     const bottom = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.4, 0.7), leafMat);
     bottom.position.y = 0.7;

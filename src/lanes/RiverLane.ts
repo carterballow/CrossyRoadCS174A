@@ -13,9 +13,11 @@ export class RiverLane extends Lane {
     // Water surface
     const waterGeo = new THREE.PlaneGeometry(LANE_WIDTH, 1);
     const waterMat = new THREE.MeshStandardMaterial({
-      color: 0x1565c0,
+      color: 0x0a1a3a,
+      emissive: 0x001133,
+      emissiveIntensity: 0.2,
       transparent: true,
-      opacity: 0.75,
+      opacity: 0.8,
     });
     const water = new THREE.Mesh(waterGeo, waterMat);
     water.rotation.x = -Math.PI / 2;
