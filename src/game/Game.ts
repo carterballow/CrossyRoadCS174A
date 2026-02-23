@@ -323,6 +323,12 @@ export class Game {
       p.y + CAM_LOOK_OFFSET.y,
       p.z + CAM_LOOK_OFFSET.z,
     );
+
+    // Move shadow-casting light to follow player
+    const dir = this.sceneMgr.dirLight;
+    dir.position.set(p.x + 10, 20, p.z + 10);
+    dir.target.position.set(p.x, 0, p.z);
+    dir.target.updateMatrixWorld();
   }
 
   private loadHighScore(): number {
