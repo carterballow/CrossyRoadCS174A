@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Lane, LANE_WIDTH } from './Lane';
 import { Log } from '../entities/Log';
 import { Player } from '../entities/Player';
+import { createWaterTexture } from '../scene/Textures';
 
 export class RiverLane extends Lane {
   private logs: Log[] = [];
@@ -22,8 +23,11 @@ export class RiverLane extends Lane {
 
     // Water surface with alpha blending
     const waterGeo = new THREE.PlaneGeometry(LANE_WIDTH, 1, 20, 1);
+    const waterTex = createWaterTexture();
+    waterTex.repeat.set(LANE_WIDTH / 2, 1);
     this.waterMat = new THREE.MeshStandardMaterial({
       color: 0x0a2a5a,
+      map: waterTex,
       emissive: 0x001144,
       emissiveIntensity: 0.3,
       transparent: true,

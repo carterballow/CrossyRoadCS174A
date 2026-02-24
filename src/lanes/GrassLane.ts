@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { Lane, LANE_WIDTH } from './Lane';
 import { Tree } from '../entities/Tree';
-import {Player} from "../entities/Player";
+import { Player } from '../entities/Player';
+import { createGrassTexture } from '../scene/Textures';
 
 export class GrassLane extends Lane {
   private trees: Tree[] = [];
@@ -9,8 +10,10 @@ export class GrassLane extends Lane {
   constructor(zIndex: number, treePositions?: number[]) {
     super('grass', zIndex);
 
-    // Dark grass strip
-    const strip = this.createStrip(0x1a3a1a);
+    // Dark grass strip with texture
+    const tex = createGrassTexture();
+    tex.repeat.set(LANE_WIDTH, 1);
+    const strip = this.createStrip(0x1a3a1a, tex);
     this.mesh.add(strip);
 
     // Subtle edge lines

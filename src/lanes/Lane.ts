@@ -16,9 +16,13 @@ export abstract class Lane {
     this.mesh.position.z = zIndex;
   }
 
-  protected createStrip(color: number): THREE.Mesh {
+  protected createStrip(color: number, texture?: THREE.Texture): THREE.Mesh {
     const geo = new THREE.PlaneGeometry(LANE_WIDTH, 1);
-    const mat = new THREE.MeshStandardMaterial({ color });
+    const matOptions: THREE.MeshStandardMaterialParameters = { color };
+    if (texture) {
+      matOptions.map = texture;
+    }
+    const mat = new THREE.MeshStandardMaterial(matOptions);
     const strip = new THREE.Mesh(geo, mat);
     strip.rotation.x = -Math.PI / 2;
     strip.receiveShadow = true;

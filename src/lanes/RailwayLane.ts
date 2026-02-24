@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { Lane, LANE_WIDTH } from './Lane';
 import { Train } from '../entities/Train';
-import {Player} from "../entities/Player";
+import { Player } from '../entities/Player';
+import { createRailwayTexture } from '../scene/Textures';
 
 export class RailwayLane extends Lane {
   private train: Train;
@@ -9,8 +10,10 @@ export class RailwayLane extends Lane {
   constructor(zIndex: number, direction?: number, waitDuration?: number) {
     super('railway', zIndex);
 
-    // Very dark gravel strip
-    const strip = this.createStrip(0x121212);
+    // Dark gravel strip with texture
+    const tex = createRailwayTexture();
+    tex.repeat.set(LANE_WIDTH / 2, 1);
+    const strip = this.createStrip(0x121212, tex);
     this.mesh.add(strip);
 
     // rails
