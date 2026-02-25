@@ -99,17 +99,19 @@ export class Game {
       }
     }
 
-    // Default weighted random
+    // Weighted random — grass decreases with distance, hazards increase
+    const diff = this.getDifficulty(z);
+    const grassWeight = Math.max(0.1, 0.35 - (diff - 1) * 0.1);
     const r = Math.random();
-    if (r < 0.3) {
+    if (r < grassWeight) {
       if (this.lastLaneType !== 'grass') this.consecutiveCount = 1;
       else this.consecutiveCount++;
       return 'grass';
-    } else if (r < 0.6) {
+    } else if (r < grassWeight + 0.3) {
       if (this.lastLaneType !== 'road') this.consecutiveCount = 1;
       else this.consecutiveCount++;
       return 'road';
-    } else if (r < 0.82) {
+    } else if (r < grassWeight + 0.52) {
       if (this.lastLaneType !== 'river') this.consecutiveCount = 1;
       else this.consecutiveCount++;
       return 'river';
@@ -139,14 +141,26 @@ export class Game {
     this.laneMap.clear();
   }
 
+  private getDifficulty(z: number): number {
+    // Ramps from 1.0 at z=0 to ~2.0 around z=100, capping at 2.5
+    return Math.min(2.5, 1 + Math.max(0, z) * 0.012);
+  }
+
   private createLane(type: string, z: number): Lane {
+    const diff = this.getDifficulty(z);
     switch (type) {
-      case 'road':
-        return new RoadLane(z);
-      case 'railway':
-        return new RailwayLane(z);
-      case 'river':
-        return new RiverLane(z);
+      case 'road': {
+        const spd = (1.5 + Math.random() * 2) * diff;
+        return new RoadLane(z, undefined, spd);
+      }
+      case 'railway': {
+        const wait = Math.max(1.5, (3 + Math.random() * 3) / diff);
+        return new RailwayLane(z, undefined, wait);
+      }
+      case 'river': {
+        const spd = (0.8 + Math.random() * 1.2) * diff;
+        return new RiverLane(z, undefined, spd);
+      }
       case 'grass':
       default:
         return new GrassLane(z);
