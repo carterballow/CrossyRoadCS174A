@@ -8,6 +8,7 @@ import { RoadLane } from '../lanes/RoadLane';
 import { RailwayLane } from '../lanes/RailwayLane';
 import { RiverLane } from '../lanes/RiverLane';
 import { HUD } from '../ui/HUD';
+import { ParticleSystem } from '../entities/Particles';
 
 const CAM_OFFSET = new THREE.Vector3(0, 6, -8);
 const CAM_LOOK_OFFSET = new THREE.Vector3(0, 1, 4);
@@ -24,6 +25,7 @@ export class Game {
   private laneMap = new Map<number, Lane>();
   private clock = new THREE.Clock();
   private hud: HUD;
+  private particles: ParticleSystem;
 
   private state: GameState = 'menu';
   private score = 0;
@@ -39,6 +41,7 @@ export class Game {
     this.sceneMgr = new SceneManager();
     this.input = new InputManager();
     this.hud = new HUD();
+    this.particles = new ParticleSystem(this.sceneMgr.scene);
 
     this.highScore = this.loadHighScore();
 
@@ -186,6 +189,7 @@ export class Game {
 
     if (this.state === 'dead') {
       this.handleDeadInput();
+      this.particles.update(delta);
       this.updateCamera();
       this.sceneMgr.render();
       return;
@@ -228,6 +232,7 @@ export class Game {
   }
 
   private restart(): void {
+    this.particles.clear();
     this.clearLanes();
     this.initLanes();
 
@@ -313,11 +318,13 @@ export class Game {
     if (!lane) return;
     if (lane.type === 'road' || lane.type === 'railway') {
       if (lane.checkCollision(this.player)) {
+        this.particles.emitImpact(this.player.position);
         this.die();
       }
     }
     if (lane.type === 'river') {
       if (lane.checkCollision(this.player)) {
+        this.particles.emitSplash(this.player.position);
         this.die();
       }
     }
