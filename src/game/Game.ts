@@ -12,6 +12,7 @@ import { ParticleSystem } from '../entities/Particles';
 
 const CAM_OFFSET = new THREE.Vector3(0, 6, -8);
 const CAM_LOOK_OFFSET = new THREE.Vector3(0, 1, 4);
+const CAM_LERP_SPEED = 5;
 
 const LANES_AHEAD = 20;
 const LANES_BEHIND = 8;
@@ -182,7 +183,7 @@ export class Game {
     if (this.state === 'menu') {
       this.handleMenuInput();
       for (const [, lane] of this.laneMap) lane.update(delta);
-      this.updateCamera();
+      this.updateCamera(delta);
       this.sceneMgr.render();
       return;
     }
@@ -190,7 +191,7 @@ export class Game {
     if (this.state === 'dead') {
       this.handleDeadInput();
       this.particles.update(delta);
-      this.updateCamera();
+      this.updateCamera(delta);
       this.sceneMgr.render();
       return;
     }
@@ -207,8 +208,9 @@ export class Game {
     this.updateScore();
     this.manageLanes();
     this.checkDeathCollisions();
+    this.checkOutOfBounds();
 
-    this.updateCamera();
+    this.updateCamera(delta);
     this.sceneMgr.render();
   };
 
@@ -286,6 +288,11 @@ export class Game {
   private tryMovePlayer(dx: number, dz: number): void {
     const targetX = Math.round(this.player.position.x) + dx;
     const targetZ = Math.round(this.player.position.z) + dz;
+
+    // Limit backward movement
+    if (dz < 0 && targetZ < this.maxZ - 3) return;
+    // Limit lateral bounds
+    if (Math.abs(targetX) > 8) return;
     const lane = this.laneMap.get(targetZ);
     if (lane && lane.type === 'grass') {
       const oldPos = this.player.position.clone();
@@ -330,15 +337,30 @@ export class Game {
     }
   }
 
-  private updateCamera(): void {
+  private checkOutOfBounds(): void {
+    if (Math.abs(this.player.position.x) > 9.5) {
+      this.particles.emitSplash(this.player.position);
+      this.die();
+    }
+  }
+
+  private updateCamera(delta?: number): void {
     const cam = this.sceneMgr.camera;
     const p = this.player.position;
 
-    cam.position.set(
+    const targetPos = new THREE.Vector3(
       p.x + CAM_OFFSET.x,
       p.y + CAM_OFFSET.y,
       p.z + CAM_OFFSET.z,
     );
+
+    // Smooth camera follow
+    if (delta && delta > 0) {
+      const t = 1 - Math.exp(-CAM_LERP_SPEED * delta);
+      cam.position.lerp(targetPos, t);
+    } else {
+      cam.position.copy(targetPos);
+    }
 
     cam.lookAt(
       p.x + CAM_LOOK_OFFSET.x,
