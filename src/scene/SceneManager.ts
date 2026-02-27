@@ -13,14 +13,14 @@ export class SceneManager {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 0.8;
+    this.renderer.toneMappingExposure = 1.3;
     document.body.appendChild(this.renderer.domElement);
 
     this.scene = new THREE.Scene();
     // Dark night sky
     this.scene.background = new THREE.Color(0x0a0a1a);
     // Exponential fog for distance fade into darkness
-    this.scene.fog = new THREE.FogExp2(0x0a0a1a, 0.045);
+    this.scene.fog = new THREE.FogExp2(0x0a0a1a, 0.035);
 
     this.camera = new THREE.PerspectiveCamera(
       60,
@@ -35,12 +35,12 @@ export class SceneManager {
   }
 
   private setupLighting(): THREE.DirectionalLight {
-    // Dim blue-tinted ambient for moonlight feel
-    const ambient = new THREE.AmbientLight(0x1a1a3a, 0.8);
+    // Warmer, brighter ambient for grimy streetlit feel
+    const ambient = new THREE.AmbientLight(0x2a2035, 1.4);
     this.scene.add(ambient);
 
-    // Cool-toned directional "moonlight"
-    const dir = new THREE.DirectionalLight(0x4466aa, 0.6);
+    // Slightly warm directional to simulate city glow bounce
+    const dir = new THREE.DirectionalLight(0x6677aa, 1.0);
     dir.position.set(10, 20, 10);
     dir.castShadow = true;
     dir.shadow.mapSize.set(2048, 2048);
@@ -55,8 +55,8 @@ export class SceneManager {
     this.scene.add(dir);
     this.scene.add(dir.target);
 
-    // Faint warm hemisphere light (sky/ground)
-    const hemi = new THREE.HemisphereLight(0x1a1a3a, 0x0a0a0a, 0.3);
+    // Hemisphere: warm sodium-vapor sky tint, dark ground
+    const hemi = new THREE.HemisphereLight(0x332a1a, 0x0a0a0a, 0.6);
     this.scene.add(hemi);
 
     return dir;

@@ -19,9 +19,9 @@ export class Player extends Entity {
     // body — slight emissive so player is visible at night
     const bodyGeo = new THREE.BoxGeometry(0.5, 0.6, 0.5);
     const bodyMat = new THREE.MeshStandardMaterial({
-      color: 0xeeeeee,
-      emissive: 0x333333,
-      emissiveIntensity: 0.3,
+      color: 0xf5f5f5,
+      emissive: 0x555555,
+      emissiveIntensity: 0.4,
     });
     const body = new THREE.Mesh(bodyGeo, bodyMat);
     body.position.y = 0.3;

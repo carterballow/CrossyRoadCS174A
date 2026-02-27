@@ -13,7 +13,7 @@ export class RailwayLane extends Lane {
     // Dark gravel strip with texture
     const tex = createRailwayTexture();
     tex.repeat.set(LANE_WIDTH / 2, 1);
-    const strip = this.createStrip(0x121212, tex);
+    const strip = this.createStrip(0x1a1a1a, tex);
     this.mesh.add(strip);
 
     // rails
