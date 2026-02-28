@@ -84,8 +84,8 @@ export class RoadLane extends Lane {
     if (pz !== this.zIndex) return false;
     const px = player.position.x;
 
-    const player_half = 0.35; //change later
-    const car_half = 1.0;
+    const player_half = 0.18;
+    const car_half = 0.9;
 
     for (const car of this.cars) {
       const cx = car.mesh.position.x; 
