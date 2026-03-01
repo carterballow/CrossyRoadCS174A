@@ -10,12 +10,13 @@ import { RiverLane } from '../lanes/RiverLane';
 import { HUD } from '../ui/HUD';
 import { ParticleSystem } from '../entities/Particles';
 
-const CAM_OFFSET = new THREE.Vector3(0, 4.5, -5.5);
-const CAM_LOOK_OFFSET = new THREE.Vector3(0, 0.5, 5);
+const CAM_OFFSET = new THREE.Vector3(0, 3.5, -4.0);
+const CAM_LOOK_OFFSET = new THREE.Vector3(0, 0.5, 4);
 const CAM_LERP_SPEED = 5;
+const WATER_LIGHT_DIR = new THREE.Vector3(10, 20, 10).normalize();
 
-const LANES_AHEAD = 20;
-const LANES_BEHIND = 8;
+const LANES_AHEAD = 15;
+const LANES_BEHIND = 5;
 
 type GameState = 'menu' | 'playing' | 'dead';
 
@@ -127,7 +128,7 @@ export class Game {
   }
 
   private pruneLanesBehind(playerZ: number): void {
-    const minZ = playerZ - LANES_BEHIND;
+    const minZ = playerZ - 10;
     for (const [z, lane] of this.laneMap) {
       if (z < minZ) {
         this.sceneMgr.scene.remove(lane.mesh);
@@ -202,6 +203,7 @@ export class Game {
     this.handleLogRiding(delta);
 
     for (const [, lane] of this.laneMap) {
+      if (lane.type === 'river') (lane as RiverLane).setLightDir(WATER_LIGHT_DIR);
       lane.update(delta);
     }
 
@@ -290,7 +292,7 @@ export class Game {
     const targetZ = Math.round(this.player.position.z) + dz;
 
     // Limit backward movement
-    if (dz < 0 && targetZ < this.maxZ - 3) return;
+    if (dz < 0 && targetZ < this.maxZ - 5) return;
     // Limit lateral bounds
     if (Math.abs(targetX) > 8) return;
     const lane = this.laneMap.get(targetZ);

@@ -15,10 +15,10 @@ export class RoadLane extends Lane {
     const strip = this.createStrip(0x222222, tex);
     this.mesh.add(strip);
 
-    // dashed center line
+    // dashed center line — only in play area for performance
     const dashMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
     const dashGeo = new THREE.PlaneGeometry(0.3, 0.06);
-    for (let x = -LANE_WIDTH / 2; x < LANE_WIDTH / 2; x += 0.8) {
+    for (let x = -12; x < 12; x += 0.8) {
       const dash = new THREE.Mesh(dashGeo, dashMat);
       dash.rotation.x = -Math.PI / 2;
       dash.position.set(x, 0.011, 0);
@@ -32,7 +32,7 @@ export class RoadLane extends Lane {
       emissive: 0xffe8c0,
       emissiveIntensity: 1.2,
     });
-    for (let x = -6; x <= 6; x += 4) {
+    for (let x = -8; x <= 8; x += 4) {
       const side = (Math.round(x / 4) % 2 === 0) ? -0.55 : 0.55;
 
       // vertical pole
@@ -61,7 +61,7 @@ export class RoadLane extends Lane {
 
     const dir = direction ?? (Math.random() > 0.5 ? 1 : -1);
     const spd = speed ?? 1.5 + Math.random() * 2;
-    const count = carCount ?? Math.floor(Math.random() * 2) + 2;
+    const count = carCount ?? Math.floor(Math.random() * 3) + 3;
     const bounds = LANE_WIDTH / 2 + 1;
     const spacing = LANE_WIDTH / count;
 
