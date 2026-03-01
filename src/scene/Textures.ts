@@ -54,68 +54,6 @@ export function createRoadTexture(): THREE.CanvasTexture {
     ctx.fillRect(0, 62, 256, 2);
   });
 }
-
-export function createWaterTexture(): THREE.CanvasTexture {
-  return createCanvasTexture(256, 256, (ctx) => {
-    // Deep water gradient base
-    const grad = ctx.createLinearGradient(0, 0, 0, 256);
-    grad.addColorStop(0, '#08203a');
-    grad.addColorStop(0.5, '#0a2a5a');
-    grad.addColorStop(1, '#081830');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 256, 256);
-
-    // Layered horizontal wave bands
-    for (let layer = 0; layer < 5; layer++) {
-      const freq = 0.02 + layer * 0.01;
-      const amp = 2 + layer * 1.5;
-      const phase = layer * 40;
-      const alpha = 0.06 + layer * 0.02;
-
-      ctx.strokeStyle = `rgba(120, 200, 255, ${alpha})`;
-      ctx.lineWidth = 1.5 - layer * 0.15;
-
-      for (let row = 0; row < 256; row += 8 + layer * 3) {
-        ctx.beginPath();
-        for (let x = 0; x <= 256; x += 2) {
-          const y = row + Math.sin(x * freq + phase) * amp
-                        + Math.sin(x * freq * 2.3 + phase * 0.7) * amp * 0.4;
-          if (x === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-      }
-    }
-
-    // Ripple rings scattered across the surface
-    for (let i = 0; i < 12; i++) {
-      const cx = Math.random() * 256;
-      const cy = Math.random() * 256;
-      const maxR = 8 + Math.random() * 12;
-      for (let r = maxR; r > 2; r -= 3) {
-        const alpha = 0.04 + (1 - r / maxR) * 0.08;
-        ctx.strokeStyle = `rgba(150, 210, 255, ${alpha})`;
-        ctx.lineWidth = 0.8;
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-    }
-
-    // Bright specular highlights — small bright spots
-    for (let i = 0; i < 40; i++) {
-      const x = Math.random() * 256;
-      const y = Math.random() * 256;
-      const alpha = Math.random() * 0.12 + 0.03;
-      const radius = Math.random() * 2 + 0.5;
-      ctx.fillStyle = `rgba(180, 220, 255, ${alpha})`;
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  });
-}
-
 export function createRailwayTexture(): THREE.CanvasTexture {
   return createCanvasTexture(128, 64, (ctx) => {
     // Dark gravel
