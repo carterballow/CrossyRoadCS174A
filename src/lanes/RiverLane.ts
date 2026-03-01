@@ -8,12 +8,13 @@ export class RiverLane extends Lane {
   private logs: Log[] = [];
   private direction: number;
   private waterMat: THREE.MeshStandardMaterial;
-  private elapsed = Math.random() * 100; // stagger animation
+  private waterTex: THREE.CanvasTexture;
+  private elapsed = Math.random() * 100;
 
   constructor(zIndex: number, direction?: number, speed?: number, logCount?: number) {
     super('river', zIndex);
 
-    // River bed (dark bottom visible through water)
+    // River bed
     const bedGeo = new THREE.PlaneGeometry(LANE_WIDTH, 1);
     const bedMat = new THREE.MeshStandardMaterial({ color: 0x050510 });
     const bed = new THREE.Mesh(bedGeo, bedMat);
@@ -21,19 +22,19 @@ export class RiverLane extends Lane {
     bed.position.y = -0.25;
     this.mesh.add(bed);
 
-    // Water surface with alpha blending
-    const waterGeo = new THREE.PlaneGeometry(LANE_WIDTH, 1, 20, 1);
-    const waterTex = createWaterTexture();
-    waterTex.repeat.set(LANE_WIDTH / 2, 1);
+    // Water surface
+    const waterGeo = new THREE.PlaneGeometry(LANE_WIDTH, 1, 32, 4);
+    this.waterTex = createWaterTexture();
+    this.waterTex.repeat.set(LANE_WIDTH / 3, 1);
     this.waterMat = new THREE.MeshStandardMaterial({
-      color: 0x0a2a5a,
-      map: waterTex,
-      emissive: 0x001144,
-      emissiveIntensity: 0.3,
+      color: 0x0e3060,
+      map: this.waterTex,
+      emissive: 0x061a33,
+      emissiveIntensity: 0.2,
       transparent: true,
-      opacity: 0.65,
-      metalness: 0.3,
-      roughness: 0.4,
+      opacity: 0.7,
+      metalness: 0.2,
+      roughness: 0.5,
       side: THREE.DoubleSide,
     });
     const water = new THREE.Mesh(waterGeo, this.waterMat);
@@ -43,12 +44,8 @@ export class RiverLane extends Lane {
     water.renderOrder = 1;
     this.mesh.add(water);
 
-    // Shore edges (subtle bank lines)
-    const shoreMat = new THREE.MeshStandardMaterial({
-      color: 0x1a1a10,
-      emissive: 0x0a0a05,
-      emissiveIntensity: 0.1,
-    });
+    // Shore edges
+    const shoreMat = new THREE.MeshStandardMaterial({ color: 0x1a1a10 });
     const shoreGeo = new THREE.BoxGeometry(LANE_WIDTH, 0.08, 0.08);
     for (const zOff of [-0.5, 0.5]) {
       const shore = new THREE.Mesh(shoreGeo, shoreMat);
@@ -75,7 +72,6 @@ export class RiverLane extends Lane {
   checkCollision(player: Player): boolean {
     const pz = Math.round(player.position.z);
     if (pz !== this.zIndex) return false;
-
     return !this.isOnLog(player);
   }
 
@@ -103,10 +99,12 @@ export class RiverLane extends Lane {
       log.update(delta);
     }
 
-    // Animate water opacity for shimmer effect
+    // Scroll water texture in flow direction
     this.elapsed += delta;
-    const shimmer = 0.6 + 0.08 * Math.sin(this.elapsed * 2.5);
-    this.waterMat.opacity = shimmer;
-    this.waterMat.emissiveIntensity = 0.25 + 0.1 * Math.sin(this.elapsed * 1.8 + 1);
+    this.waterTex.offset.x += this.direction * delta * 0.04;
+    this.waterTex.offset.y += delta * 0.01;
+
+    // Gentle opacity breathing
+    this.waterMat.opacity = 0.65 + 0.06 * Math.sin(this.elapsed * 1.5);
   }
 }
