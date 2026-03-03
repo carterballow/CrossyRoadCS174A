@@ -4,6 +4,12 @@ import { Train } from '../entities/Train';
 import { Player } from '../entities/Player';
 import { createRailwayTexture } from '../scene/Textures';
 
+// Shared geometry/materials across all railway lanes
+const railMat = new THREE.MeshStandardMaterial({ color: 0x5a5a5a, metalness: 0.6, roughness: 0.3 });
+const railGeo = new THREE.BoxGeometry(LANE_WIDTH, 0.06, 0.06);
+const tieMat = new THREE.MeshStandardMaterial({ color: 0x2a1a0e });
+const tieGeo = new THREE.BoxGeometry(0.08, 0.03, 0.7);
+
 export class RailwayLane extends Lane {
   private train: Train;
   private trainDir: number;
@@ -17,23 +23,25 @@ export class RailwayLane extends Lane {
     const strip = this.createStrip(0x1a1a1a, tex);
     this.mesh.add(strip);
 
-    // rails — wider apart to match bigger train
-    const railMat = new THREE.MeshStandardMaterial({ color: 0x5a5a5a, metalness: 0.6, roughness: 0.3 });
+    // rails
     for (const zOff of [-0.25, 0.25]) {
-      const railGeo = new THREE.BoxGeometry(LANE_WIDTH, 0.06, 0.06);
       const rail = new THREE.Mesh(railGeo, railMat);
       rail.position.set(0, 0.03, zOff);
       this.mesh.add(rail);
     }
 
-    // wooden ties — only in visible play area for performance
-    const tieMat = new THREE.MeshStandardMaterial({ color: 0x2a1a0e });
-    const tieGeo = new THREE.BoxGeometry(0.08, 0.03, 0.7);
+    // wooden ties — InstancedMesh instead of individual meshes
+    const tieCount = Math.ceil((14 - (-14)) / 0.5);
+    const tieInstanced = new THREE.InstancedMesh(tieGeo, tieMat, tieCount);
+    const matrix = new THREE.Matrix4();
+    let idx = 0;
     for (let x = -14; x < 14; x += 0.5) {
-      const tie = new THREE.Mesh(tieGeo, tieMat);
-      tie.position.set(x, 0.015, 0);
-      this.mesh.add(tie);
+      matrix.makeTranslation(x, 0.015, 0);
+      tieInstanced.setMatrixAt(idx++, matrix);
     }
+    tieInstanced.instanceMatrix.needsUpdate = true;
+    tieInstanced.count = idx;
+    this.mesh.add(tieInstanced);
 
     const dir = direction ?? (Math.random() > 0.5 ? 1 : -1);
     this.trainDir = dir;

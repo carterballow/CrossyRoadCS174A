@@ -4,6 +4,19 @@ import { Car } from '../entities/Car';
 import { Player } from '../entities/Player';
 import { createRoadTexture } from '../scene/Textures';
 
+// Shared geometry/materials across all road lanes
+const dashMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.3 });
+const dashGeo = new THREE.PlaneGeometry(0.3, 0.06);
+const poleMat = new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.6, roughness: 0.3 });
+const lampMat = new THREE.MeshStandardMaterial({
+  color: 0xffffff,
+  emissive: 0xffe8c0,
+  emissiveIntensity: 3.0,
+});
+const poleGeo = new THREE.BoxGeometry(0.06, 1.5, 0.06);
+const armGeo = new THREE.BoxGeometry(0.06, 0.06, 0.35);
+const headGeo = new THREE.BoxGeometry(0.12, 0.06, 0.12);
+
 export class RoadLane extends Lane {
   private cars: Car[] = [];
 
@@ -13,48 +26,48 @@ export class RoadLane extends Lane {
     const tex = createRoadTexture();
     tex.repeat.set(LANE_WIDTH / 4, 1);
     const strip = this.createStrip(0x222222, tex);
+    const roadMat = strip.material as THREE.MeshStandardMaterial;
+    roadMat.roughness = 0.85;
     this.mesh.add(strip);
 
-    // dashed center line — only in play area for performance
-    const dashMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
-    const dashGeo = new THREE.PlaneGeometry(0.3, 0.06);
+    // dashed center line — InstancedMesh instead of individual meshes
+    const dashCount = Math.ceil((12 - (-12)) / 0.8);
+    const dashInstanced = new THREE.InstancedMesh(dashGeo, dashMat, dashCount);
+    const tmpPos = new THREE.Vector3();
+    const tmpQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
+    const tmpScale = new THREE.Vector3(1, 1, 1);
+    const matrix = new THREE.Matrix4();
+    let idx = 0;
     for (let x = -12; x < 12; x += 0.8) {
-      const dash = new THREE.Mesh(dashGeo, dashMat);
-      dash.rotation.x = -Math.PI / 2;
-      dash.position.set(x, 0.011, 0);
-      this.mesh.add(dash);
+      tmpPos.set(x, 0.011, 0);
+      matrix.compose(tmpPos, tmpQuat, tmpScale);
+      dashInstanced.setMatrixAt(idx++, matrix);
     }
+    dashInstanced.instanceMatrix.needsUpdate = true;
+    dashInstanced.count = idx;
+    this.mesh.add(dashInstanced);
 
     // Streetlights — clean pole + arm + lamp head
-    const poleMat = new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.6, roughness: 0.3 });
-    const lampMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      emissive: 0xffe8c0,
-      emissiveIntensity: 1.2,
-    });
-    for (let x = -8; x <= 8; x += 4) {
+    for (const x of [-7, 7]) {
       const side = (Math.round(x / 4) % 2 === 0) ? -0.55 : 0.55;
 
       // vertical pole
-      const poleGeo = new THREE.BoxGeometry(0.06, 1.5, 0.06);
       const pole = new THREE.Mesh(poleGeo, poleMat);
       pole.position.set(x, 0.75, side);
       this.mesh.add(pole);
 
       // horizontal arm toward road center
-      const armGeo = new THREE.BoxGeometry(0.06, 0.06, 0.35);
       const arm = new THREE.Mesh(armGeo, poleMat);
       arm.position.set(x, 1.5, side * 0.6);
       this.mesh.add(arm);
 
       // lamp head (small box under arm tip)
-      const headGeo = new THREE.BoxGeometry(0.12, 0.06, 0.12);
       const head = new THREE.Mesh(headGeo, lampMat);
       head.position.set(x, 1.47, side * 0.35);
       this.mesh.add(head);
 
-      // point light — clean warm white
-      const light = new THREE.PointLight(0xffe8c0, 2.0, 6, 1.8);
+      // point light — clean warm white, tight range for performance
+      const light = new THREE.PointLight(0xffe8c0, 2.0, 4, 2);
       light.position.set(x, 1.45, side * 0.35);
       this.mesh.add(light);
     }
