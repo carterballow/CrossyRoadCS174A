@@ -40,11 +40,13 @@ export class GrassLane extends Lane {
     const pz = Math.round(player.position.z);
     if (pz !== this.zIndex) return false;
 
-    const px = Math.round(player.position.x);
+    const px = player.position.x;
+    const playerHalf = 0.18;
+    const treeHalf = 0.35; // trunk + foliage radius
 
     for (const tree of this.trees) {
-      const tx = Math.round(tree.mesh.position.x);
-      if (tx === px) return true;
+      const tx = tree.mesh.position.x;
+      if (Math.abs(px - tx) < playerHalf + treeHalf) return true;
     }
     return false;
   }

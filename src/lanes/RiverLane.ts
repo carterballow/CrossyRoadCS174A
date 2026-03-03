@@ -41,6 +41,36 @@ export class RiverLane extends Lane {
       this.mesh.add(shore);
     }
 
+    // Streetlights along the shore
+    const poleMat = new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.6, roughness: 0.3 });
+    const lampMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      emissive: 0xffe8c0,
+      emissiveIntensity: 1.2,
+    });
+    for (let x = -8; x <= 8; x += 8) {
+      const side = (Math.round(x / 8) % 2 === 0) ? -0.55 : 0.55;
+
+      const poleGeo = new THREE.BoxGeometry(0.06, 1.5, 0.06);
+      const pole = new THREE.Mesh(poleGeo, poleMat);
+      pole.position.set(x, 0.75, side);
+      this.mesh.add(pole);
+
+      const armGeo = new THREE.BoxGeometry(0.06, 0.06, 0.35);
+      const arm = new THREE.Mesh(armGeo, poleMat);
+      arm.position.set(x, 1.5, side * 0.6);
+      this.mesh.add(arm);
+
+      const headGeo = new THREE.BoxGeometry(0.12, 0.06, 0.12);
+      const head = new THREE.Mesh(headGeo, lampMat);
+      head.position.set(x, 1.47, side * 0.35);
+      this.mesh.add(head);
+
+      const light = new THREE.PointLight(0xffe8c0, 2.0, 6, 1.8);
+      light.position.set(x, 1.45, side * 0.35);
+      this.mesh.add(light);
+    }
+
     const spd = speed ?? 0.8 + Math.random() * 1.2;
     const count = logCount ?? Math.floor(Math.random() * 3) + 4;
     const bounds = LANE_WIDTH / 2;
