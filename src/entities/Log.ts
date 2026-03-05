@@ -1,9 +1,12 @@
 import * as THREE from 'three';
 import { Entity } from './Entity';
+import { getLogTexture, getLogRingTexture } from '../scene/Textures';
 
 // Shared materials — created once
-const logBodyMat = new THREE.MeshStandardMaterial({ color: 0x3e2518 });
-const ringMat = new THREE.MeshStandardMaterial({ color: 0x2a1508 });
+const logTex = getLogTexture();
+const logBodyMat = new THREE.MeshStandardMaterial({ color: 0x3e2518, map: logTex });
+const ringTex = getLogRingTexture();
+const ringMat = new THREE.MeshStandardMaterial({ color: 0x2a1508, map: ringTex });
 const ringGeo = new THREE.BoxGeometry(0.08, 0.32, 0.72);
 
 export class Log extends Entity {

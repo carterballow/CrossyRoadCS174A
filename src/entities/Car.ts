@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Entity } from './Entity';
+import { getCarBodyTexture, getCarCabinTexture, getWheelTexture } from '../scene/Textures';
 
 const CAR_COLORS = [0xcc2233, 0x2266cc, 0xccaa22, 0x22aa44, 0xcc6622, 0x8833aa];
 
@@ -10,7 +11,8 @@ const hlGeo = new THREE.BoxGeometry(0.06, 0.1, 0.12);
 const wheelGeo = new THREE.BoxGeometry(0.25, 0.18, 0.1);
 
 // Shared materials that don't vary per car
-const cabinMat = new THREE.MeshStandardMaterial({ color: 0x1a1a2e });
+const cabinTex = getCarCabinTexture();
+const cabinMat = new THREE.MeshStandardMaterial({ color: 0x1a1a2e, map: cabinTex });
 const headlightMat = new THREE.MeshStandardMaterial({
   color: 0xffffff,
   emissive: 0xffffdd,
@@ -21,21 +23,26 @@ const taillightMat = new THREE.MeshStandardMaterial({
   emissive: 0xff0000,
   emissiveIntensity: 2.5,
 });
-const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+const wheelTex = getWheelTexture();
+const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, map: wheelTex });
 
 export class Car extends Entity {
   readonly speed: number;
   private direction: number;
   private bounds: number;
 
-  // Model is always built facing +x direction.
-  // RoadLane rotates the group via rotation.y for direction.
   constructor(direction: number, speed: number, bounds: number) {
     const color = CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)];
     const group = new THREE.Group();
 
-    // body — flat color, no emissive glow
-    const bodyMat = new THREE.MeshStandardMaterial({ color });
+    // body — textured with tonal variation, tinted by car color
+    const bodyTex = getCarBodyTexture();
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color,
+      map: bodyTex,
+      metalness: 0.15,
+      roughness: 0.6,
+    });
     const body = new THREE.Mesh(bodyGeo, bodyMat);
     body.position.y = 0.2;
     body.castShadow = true;
