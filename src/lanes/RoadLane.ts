@@ -29,8 +29,8 @@ export class RoadLane extends Lane {
     super('road', zIndex);
 
     const tex = createRoadTexture();
-    tex.repeat.set(LANE_WIDTH / 4, 1);
-    const strip = this.createStrip(0x222222, tex);
+    tex.repeat.set(LANE_WIDTH / 3, 1);
+    const strip = this.createStrip(0x555555, tex);
     const roadMat = strip.material as THREE.MeshStandardMaterial;
     roadMat.roughness = 0.75;
     roadMat.metalness = 0.05;
