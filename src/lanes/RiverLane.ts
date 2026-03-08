@@ -7,7 +7,7 @@ import { createWaterMaterial } from '../scene/WaterShader';
 // Shared geometry/materials across all river lanes
 const bedGeo = new THREE.PlaneGeometry(LANE_WIDTH, 1);
 const bedMat = new THREE.MeshStandardMaterial({ color: 0x040810 });
-const waterGeo = new THREE.PlaneGeometry(LANE_WIDTH, 1, 64, 6);
+const waterGeo = new THREE.PlaneGeometry(LANE_WIDTH, 1, 80, 8);
 const shoreMat = new THREE.MeshStandardMaterial({ color: 0x1a1a10 });
 const shoreGeo = new THREE.BoxGeometry(LANE_WIDTH, 0.08, 0.08);
 
@@ -15,6 +15,7 @@ export class RiverLane extends Lane {
   private logs: Log[] = [];
   private direction: number;
   private waterMat: THREE.ShaderMaterial;
+  private time = 0;
 
   constructor(zIndex: number, direction?: number, speed?: number, logCount?: number) {
     super('river', zIndex);
@@ -87,11 +88,13 @@ export class RiverLane extends Lane {
   }
 
   update(delta: number): void {
+    this.time += delta;
+
     for (const log of this.logs) {
-      log.update(delta);
+      log.update(delta, this.time);
     }
 
     // Drive the shader time uniform
-    this.waterMat.uniforms.uTime.value += delta;
+    this.waterMat.uniforms.uTime.value = this.time;
   }
 }
