@@ -25,44 +25,38 @@ export class RoadLane extends Lane {
       this.mesh.add(dash);
     }
 
-    // Streetlights along road edges — bright sodium-vapor glow
-    const poleMat = new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.5, roughness: 0.4 });
+    // Streetlights — clean pole + arm + lamp head
+    const poleMat = new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.6, roughness: 0.3 });
     const lampMat = new THREE.MeshStandardMaterial({
-      color: 0xffcc66,
-      emissive: 0xffdd88,
-      emissiveIntensity: 2.0,
+      color: 0xffffff,
+      emissive: 0xffe8c0,
+      emissiveIntensity: 1.2,
     });
-    const poleGeo = new THREE.BoxGeometry(0.08, 1.4, 0.08);
-    const lampGeo = new THREE.BoxGeometry(0.2, 0.1, 0.2);
     for (let x = -6; x <= 6; x += 4) {
-      const side = (x / 4) % 2 === 0 ? -0.6 : 0.6;
+      const side = (Math.round(x / 4) % 2 === 0) ? -0.55 : 0.55;
+
+      // vertical pole
+      const poleGeo = new THREE.BoxGeometry(0.06, 1.5, 0.06);
       const pole = new THREE.Mesh(poleGeo, poleMat);
-      pole.position.set(x, 0.7, side);
+      pole.position.set(x, 0.75, side);
       this.mesh.add(pole);
-      const lamp = new THREE.Mesh(lampGeo, lampMat);
-      lamp.position.set(x, 1.42, side);
-      this.mesh.add(lamp);
 
-      // Bright warm pool of light
-      const light = new THREE.PointLight(0xffcc66, 2.5, 8, 1.5);
-      light.position.set(x, 1.4, side);
+      // horizontal arm toward road center
+      const armGeo = new THREE.BoxGeometry(0.06, 0.06, 0.35);
+      const arm = new THREE.Mesh(armGeo, poleMat);
+      arm.position.set(x, 1.5, side * 0.6);
+      this.mesh.add(arm);
+
+      // lamp head (small box under arm tip)
+      const headGeo = new THREE.BoxGeometry(0.12, 0.06, 0.12);
+      const head = new THREE.Mesh(headGeo, lampMat);
+      head.position.set(x, 1.47, side * 0.35);
+      this.mesh.add(head);
+
+      // point light — clean warm white
+      const light = new THREE.PointLight(0xffe8c0, 2.0, 6, 1.8);
+      light.position.set(x, 1.45, side * 0.35);
       this.mesh.add(light);
-    }
-
-    // Ground light splash — warm spot on the road surface
-    const splashMat = new THREE.MeshStandardMaterial({
-      color: 0x332200,
-      emissive: 0xffaa33,
-      emissiveIntensity: 0.15,
-      transparent: true,
-      opacity: 0.3,
-    });
-    const splashGeo = new THREE.PlaneGeometry(2.5, 0.8);
-    for (let x = -6; x <= 6; x += 4) {
-      const splash = new THREE.Mesh(splashGeo, splashMat);
-      splash.rotation.x = -Math.PI / 2;
-      splash.position.set(x, 0.012, 0);
-      this.mesh.add(splash);
     }
 
     const dir = direction ?? (Math.random() > 0.5 ? 1 : -1);
@@ -74,11 +68,13 @@ export class RoadLane extends Lane {
     for (let i = 0; i < count; i++) {
       const car = new Car(dir, spd, bounds);
       car.mesh.position.set(-bounds + i * spacing, 0, 0);
+      // dir > 0 faces +x (default), dir < 0 flips 180 so model faces -x
       car.mesh.rotation.y = dir > 0 ? 0 : Math.PI;
       this.mesh.add(car.mesh);
       this.cars.push(car);
     }
   }
+
   checkCollision(player: Player): boolean {
     const pz = Math.round(player.position.z);
     if (pz !== this.zIndex) return false;
@@ -88,7 +84,7 @@ export class RoadLane extends Lane {
     const car_half = 0.9;
 
     for (const car of this.cars) {
-      const cx = car.mesh.position.x; 
+      const cx = car.mesh.position.x;
       if (Math.abs(px - cx) <= (player_half + car_half)) {
         return true;
       }
