@@ -14,6 +14,7 @@ export class Log extends Entity {
   private direction: number;
   private bounds: number;
   readonly length: number;
+  private phaseOffset: number;
 
   constructor(direction: number, speed: number, bounds: number, length: number) {
     const group = new THREE.Group();
@@ -36,15 +37,36 @@ export class Log extends Entity {
     this.speed = speed;
     this.bounds = bounds;
     this.length = length;
+    // Random phase so logs don't all bob in sync
+    this.phaseOffset = Math.random() * Math.PI * 2;
   }
 
-  update(delta: number): void {
+  update(delta: number, time?: number): void {
     this.mesh.position.x += this.direction * this.speed * delta;
 
     if (this.direction > 0 && this.mesh.position.x > this.bounds + this.length) {
       this.mesh.position.x = -this.bounds - this.length;
     } else if (this.direction < 0 && this.mesh.position.x < -this.bounds - this.length) {
       this.mesh.position.x = this.bounds + this.length;
+    }
+
+    // Bob up/down and rock with the water
+    if (time !== undefined) {
+      const t = time + this.phaseOffset;
+      const x = this.mesh.position.x;
+
+      // Match the water shader's primary wave layers
+      const bob =
+        Math.sin(x * 1.5 + t * 0.8) * 0.035 +
+        Math.sin(x * 2.5 - t * 1.1) * 0.022 +
+        Math.sin(x * 4.5 + t * 2.0) * 0.012;
+
+      this.mesh.position.y = bob;
+
+      // Gentle roll (rotation around movement axis)
+      this.mesh.rotation.z = Math.sin(t * 1.3 + this.phaseOffset) * 0.04;
+      // Slight pitch (nose dipping)
+      this.mesh.rotation.x = Math.sin(t * 0.9 + this.phaseOffset * 0.7) * 0.03;
     }
   }
 }
