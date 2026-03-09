@@ -44,12 +44,14 @@ export class SceneManager {
     dir.position.set(10, 20, 10);
     dir.castShadow = true;
     dir.shadow.mapSize.set(2048, 2048);
+    dir.shadow.bias = -0.001;
+    dir.shadow.normalBias = 0.02;
     dir.shadow.camera.near = 0.5;
     dir.shadow.camera.far = 60;
-    dir.shadow.camera.left = -20;
-    dir.shadow.camera.right = 20;
-    dir.shadow.camera.top = 20;
-    dir.shadow.camera.bottom = -20;
+    dir.shadow.camera.left = -15;
+    dir.shadow.camera.right = 15;
+    dir.shadow.camera.top = 25;
+    dir.shadow.camera.bottom = -10;
     this.scene.add(dir);
     this.scene.add(dir.target);
 
