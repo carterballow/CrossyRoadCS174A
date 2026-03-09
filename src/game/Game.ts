@@ -9,6 +9,7 @@ import { RailwayLane } from '../lanes/RailwayLane';
 import { RiverLane } from '../lanes/RiverLane';
 import { HUD } from '../ui/HUD';
 import { ParticleSystem } from '../entities/Particles';
+import { Rain } from '../entities/Rain';
 
 const CAM_OFFSET = new THREE.Vector3(0, 3.5, -4.0);
 const CAM_LOOK_OFFSET = new THREE.Vector3(0, 0.5, 4);
@@ -28,6 +29,7 @@ export class Game {
   private clock = new THREE.Clock();
   private hud: HUD;
   private particles: ParticleSystem;
+  private rain: Rain;
 
   private state: GameState = 'menu';
   private score = 0;
@@ -44,6 +46,8 @@ export class Game {
     this.input = new InputManager();
     this.hud = new HUD();
     this.particles = new ParticleSystem(this.sceneMgr.scene);
+    this.rain = new Rain();
+    this.sceneMgr.scene.add(this.rain.group);
 
     this.highScore = this.loadHighScore();
 
@@ -184,6 +188,7 @@ export class Game {
     if (this.state === 'menu') {
       this.handleMenuInput();
       for (const [, lane] of this.laneMap) lane.update(delta);
+      this.rain.update(delta, this.sceneMgr.camera.position);
       this.updateCamera(delta);
       this.sceneMgr.render();
       return;
@@ -193,6 +198,7 @@ export class Game {
       this.player.update(delta);
       this.particles.update(delta);
       for (const [, lane] of this.laneMap) lane.update(delta);
+      this.rain.update(delta, this.sceneMgr.camera.position);
       if (this.player.deathAnimDone) {
         this.finishDeath();
       }
@@ -204,6 +210,7 @@ export class Game {
     if (this.state === 'dead') {
       this.handleDeadInput();
       this.particles.update(delta);
+      this.rain.update(delta, this.sceneMgr.camera.position);
       this.updateCamera(delta);
       this.sceneMgr.render();
       return;
@@ -224,6 +231,7 @@ export class Game {
     this.checkDeathCollisions();
     this.checkOutOfBounds();
 
+    this.rain.update(delta, this.sceneMgr.camera.position);
     this.updateCamera(delta);
     this.sceneMgr.render();
   };
