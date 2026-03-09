@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import {Player} from "../entities/Player";
 export const LANE_WIDTH = 20;
 
-export type LaneType = 'grass' | 'road' | 'railway';
+export type LaneType = 'grass' | 'road' | 'railway' | 'river';
 
 export abstract class Lane {
   readonly mesh: THREE.Group;
