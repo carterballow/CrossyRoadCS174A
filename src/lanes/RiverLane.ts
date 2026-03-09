@@ -2,45 +2,33 @@ import * as THREE from 'three';
 import { Lane, LANE_WIDTH } from './Lane';
 import { Log } from '../entities/Log';
 import { Player } from '../entities/Player';
-import { createWaterTexture } from '../scene/Textures';
+import { createWaterMaterial } from '../scene/WaterShader';
 
 export class RiverLane extends Lane {
   private logs: Log[] = [];
   private direction: number;
-  private waterMat: THREE.MeshStandardMaterial;
-  private waterTex: THREE.CanvasTexture;
-  private elapsed = Math.random() * 100;
+  private waterMat: THREE.ShaderMaterial;
 
   constructor(zIndex: number, direction?: number, speed?: number, logCount?: number) {
     super('river', zIndex);
 
-    // River bed
+    // River bed (dark bottom visible through translucent water)
     const bedGeo = new THREE.PlaneGeometry(LANE_WIDTH, 1);
-    const bedMat = new THREE.MeshStandardMaterial({ color: 0x050510 });
+    const bedMat = new THREE.MeshStandardMaterial({ color: 0x040810 });
     const bed = new THREE.Mesh(bedGeo, bedMat);
     bed.rotation.x = -Math.PI / 2;
     bed.position.y = -0.25;
     this.mesh.add(bed);
 
-    // Water surface
-    const waterGeo = new THREE.PlaneGeometry(LANE_WIDTH, 1, 32, 4);
-    this.waterTex = createWaterTexture();
-    this.waterTex.repeat.set(LANE_WIDTH / 3, 1);
-    this.waterMat = new THREE.MeshStandardMaterial({
-      color: 0x0e3060,
-      map: this.waterTex,
-      emissive: 0x061a33,
-      emissiveIntensity: 0.2,
-      transparent: true,
-      opacity: 0.7,
-      metalness: 0.2,
-      roughness: 0.5,
-      side: THREE.DoubleSide,
-    });
+    const dir = direction ?? (Math.random() > 0.5 ? 1 : -1);
+    this.direction = dir;
+
+    // Water surface — custom shader with vertex-displaced waves
+    const waterGeo = new THREE.PlaneGeometry(LANE_WIDTH, 1, 80, 12);
+    this.waterMat = createWaterMaterial(dir);
     const water = new THREE.Mesh(waterGeo, this.waterMat);
     water.rotation.x = -Math.PI / 2;
-    water.position.y = -0.1;
-    water.receiveShadow = true;
+    water.position.y = -0.08;
     water.renderOrder = 1;
     this.mesh.add(water);
 
@@ -53,8 +41,6 @@ export class RiverLane extends Lane {
       this.mesh.add(shore);
     }
 
-    const dir = direction ?? (Math.random() > 0.5 ? 1 : -1);
-    this.direction = dir;
     const spd = speed ?? 0.8 + Math.random() * 1.2;
     const count = logCount ?? Math.floor(Math.random() * 2) + 2;
     const bounds = LANE_WIDTH / 2;
@@ -99,12 +85,7 @@ export class RiverLane extends Lane {
       log.update(delta);
     }
 
-    // Scroll water texture in flow direction
-    this.elapsed += delta;
-    this.waterTex.offset.x += this.direction * delta * 0.04;
-    this.waterTex.offset.y += delta * 0.01;
-
-    // Gentle opacity breathing
-    this.waterMat.opacity = 0.65 + 0.06 * Math.sin(this.elapsed * 1.5);
+    // Drive the shader time uniform
+    this.waterMat.uniforms.uTime.value += delta;
   }
 }
