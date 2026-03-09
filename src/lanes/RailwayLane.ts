@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Lane, LANE_WIDTH } from './Lane';
 import { Train } from '../entities/Train';
+import { BulletTrain, BULLET_TRAIN_LENGTH } from '../entities/BulletTrain';
 import { Player } from '../entities/Player';
 import { createRailwayTexture } from '../scene/Textures';
 
@@ -10,9 +11,12 @@ const railGeo = new THREE.BoxGeometry(LANE_WIDTH, 0.06, 0.06);
 const tieMat = new THREE.MeshStandardMaterial({ color: 0x2a1a0e });
 const tieGeo = new THREE.BoxGeometry(0.08, 0.03, 0.7);
 
+const WAGON_SPACING = 1.9;
+
 export class RailwayLane extends Lane {
-  private train: Train;
+  private train: Train | BulletTrain;
   private trainDir: number;
+  private isBullet: boolean;
 
   constructor(zIndex: number, direction?: number, waitDuration?: number) {
     super('railway', zIndex);
@@ -45,9 +49,16 @@ export class RailwayLane extends Lane {
 
     const dir = direction ?? (Math.random() > 0.5 ? 1 : -1);
     this.trainDir = dir;
-    const wait = waitDuration ?? 3 + Math.random() * 3;
 
-    this.train = new Train(dir, wait);
+    // 10% chance of a bullet train
+    this.isBullet = Math.random() < 0.1;
+
+    if (this.isBullet) {
+      this.train = new BulletTrain(dir);
+    } else {
+      const wait = waitDuration ?? 3 + Math.random() * 3;
+      this.train = new Train(dir, wait);
+    }
     this.mesh.add(this.train.mesh);
 
     // warning signals at edges of play area
@@ -66,12 +77,14 @@ export class RailwayLane extends Lane {
 
     const px = player.position.x;
     const tx = this.train.mesh.position.x;
-
     const player_half = 0.18;
-    // Loco is centered at tx, half-length 1.1
-    // Wagons trail behind: wagon i at tx - dir * i * 1.9, each ~1.7 wide (half = 0.85)
+
+    const trainLen = this.isBullet ? BULLET_TRAIN_LENGTH : 8;
+
+    // Loco front edge
     const locoFront = tx + this.trainDir * 1.1;
-    const lastWagonCenter = tx - this.trainDir * 7 * 1.9;
+    // Last wagon trailing edge
+    const lastWagonCenter = tx - this.trainDir * (trainLen - 1) * WAGON_SPACING;
     const lastWagonBack = lastWagonCenter - this.trainDir * 0.85;
 
     const minX = Math.min(locoFront, lastWagonBack);
