@@ -51,6 +51,7 @@ export class SceneManager {
     dir.shadow.camera.top = 20;
     dir.shadow.camera.bottom = -20;
     this.scene.add(dir);
+    this.scene.add(dir.target);
 
     // Faint warm hemisphere light (sky/ground)
     const hemi = new THREE.HemisphereLight(0x1a1a3a, 0x0a0a0a, 0.3);

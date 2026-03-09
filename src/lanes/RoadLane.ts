@@ -22,6 +22,30 @@ export class RoadLane extends Lane {
       this.mesh.add(dash);
     }
 
+    // Streetlights along the road edges
+    const poleMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+    const lampMat = new THREE.MeshStandardMaterial({
+      color: 0xffcc66,
+      emissive: 0xffcc66,
+      emissiveIntensity: 0.9,
+    });
+    const poleGeo = new THREE.BoxGeometry(0.08, 1.2, 0.08);
+    const lampGeo = new THREE.BoxGeometry(0.15, 0.08, 0.15);
+    for (let x = -6; x <= 6; x += 6) {
+      for (const zSide of [-0.6, 0.6]) {
+        const pole = new THREE.Mesh(poleGeo, poleMat);
+        pole.position.set(x, 0.6, zSide);
+        this.mesh.add(pole);
+        const lamp = new THREE.Mesh(lampGeo, lampMat);
+        lamp.position.set(x, 1.22, zSide);
+        this.mesh.add(lamp);
+
+        const light = new THREE.PointLight(0xffcc66, 0.6, 5, 2);
+        light.position.set(x, 1.2, zSide);
+        this.mesh.add(light);
+      }
+    }
+
     const dir = direction ?? (Math.random() > 0.5 ? 1 : -1);
     const spd = speed ?? 1.5 + Math.random() * 2;
     const count = carCount ?? Math.floor(Math.random() * 2) + 2;
@@ -31,7 +55,6 @@ export class RoadLane extends Lane {
     for (let i = 0; i < count; i++) {
       const car = new Car(dir, spd, bounds);
       car.mesh.position.set(-bounds + i * spacing, 0, 0);
-      // face direction of travel
       car.mesh.rotation.y = dir > 0 ? 0 : Math.PI;
       this.mesh.add(car.mesh);
       this.cars.push(car);
