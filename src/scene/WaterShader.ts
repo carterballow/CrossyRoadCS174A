@@ -121,8 +121,28 @@ void main() {
   float edgeFoam = smoothstep(0.08, 0.0, edgeDist) * noise(vWorldPos.xz * 8.0 + uTime * 0.5) * 0.2;
   foam += uFoamColor * edgeFoam;
 
+  // Raindrop ripples — expanding rings from random cell positions
+  float ripple = 0.0;
+  for (int i = 0; i < 3; i++) {
+    float fi = float(i);
+    vec2 cellSz = vec2(1.2 + fi * 0.4);
+    vec2 cellId = floor(vWorldPos.xz / cellSz + fi * 7.3);
+    vec2 cellOff = vec2(hash(cellId), hash(cellId + 31.7));
+    vec2 center = (cellId + 0.3 + cellOff * 0.4) * cellSz;
+    float dist = length(vWorldPos.xz - center);
+
+    float period = 1.2 + hash(cellId + 13.0) * 0.8;
+    float t = mod(uTime + hash(cellId + 5.0) * period, period) / period;
+
+    float radius = t * 0.35;
+    float ringW = 0.012 + t * 0.008;
+    float ring = smoothstep(radius - ringW, radius, dist) * smoothstep(radius + ringW, radius, dist);
+    ripple += ring * (1.0 - t * t);
+  }
+
   // Combine
   vec3 color = diffuse + specular + foam;
+  color += vec3(0.01, 0.015, 0.02) * ripple;
   color += fresnel * vec3(0.01, 0.02, 0.03);
 
   // Alpha — slightly more opaque at wave peaks, more transparent in troughs

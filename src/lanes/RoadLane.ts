@@ -74,17 +74,49 @@ export class RoadLane extends Lane {
 
     const dir = direction ?? (Math.random() > 0.5 ? 1 : -1);
     const spd = speed ?? 1.5 + Math.random() * 2;
-    const count = carCount ?? Math.floor(Math.random() * 3) + 3;
     const bounds = LANE_WIDTH / 2 + 1;
-    const spacing = LANE_WIDTH / count;
 
-    for (let i = 0; i < count; i++) {
-      const car = new Car(dir, spd, bounds);
-      car.mesh.position.set(-bounds + i * spacing, 0, 0);
-      // dir > 0 faces +x (default), dir < 0 flips 180 so model faces -x
-      car.mesh.rotation.y = dir > 0 ? 0 : Math.PI;
-      this.mesh.add(car.mesh);
-      this.cars.push(car);
+    // 30% chance of emergency chase lane
+    const isEmergencyLane = Math.random() < 0.15;
+
+    if (isEmergencyLane) {
+      const chaseDir = Math.random() > 0.5 ? 1 : -1;
+      const chaseSpeed = spd * 1.9;
+      const policeCount = Math.random() > 0.5 ? 2 : 1;
+
+      // Supercar — slightly faster so it pulls ahead
+      const superX = -bounds + Math.random() * LANE_WIDTH;
+      const supercar = new Car(chaseDir, chaseSpeed * (1.0 + Math.random() * 0.1), bounds, 'supercar');
+      supercar.mesh.position.set(superX, 0, 0);
+      supercar.mesh.rotation.y = chaseDir > 0 ? 0 : Math.PI;
+      this.mesh.add(supercar.mesh);
+      this.cars.push(supercar);
+
+      // Police cars — placed behind the supercar in chase direction
+      for (let i = 0; i < policeCount; i++) {
+        const gap = 2.5 + i * 2.5 + Math.random() * 1.5;
+        let policeX = superX - chaseDir * gap;
+        // Wrap within bounds
+        if (policeX > bounds) policeX -= bounds * 2;
+        else if (policeX < -bounds) policeX += bounds * 2;
+        const police = new Car(chaseDir, chaseSpeed * (0.9 + Math.random() * 0.1), bounds, 'police');
+        police.mesh.position.set(policeX, 0, 0);
+        police.mesh.rotation.y = chaseDir > 0 ? 0 : Math.PI;
+        this.mesh.add(police.mesh);
+        this.cars.push(police);
+      }
+    } else {
+      const count = carCount ?? Math.floor(Math.random() * 3) + 3;
+      const spacing = LANE_WIDTH / count;
+
+      for (let i = 0; i < count; i++) {
+        const carSpeed = spd * (0.85 + Math.random() * 0.3);
+        const car = new Car(dir, carSpeed, bounds);
+        car.mesh.position.set(-bounds + i * spacing, 0, 0);
+        car.mesh.rotation.y = dir > 0 ? 0 : Math.PI;
+        this.mesh.add(car.mesh);
+        this.cars.push(car);
+      }
     }
   }
 
@@ -94,11 +126,10 @@ export class RoadLane extends Lane {
     const px = player.position.x;
 
     const player_half = 0.18;
-    const car_half = 0.9;
 
     for (const car of this.cars) {
       const cx = car.mesh.position.x;
-      if (Math.abs(px - cx) <= (player_half + car_half)) {
+      if (Math.abs(px - cx) <= (player_half + car.collisionHalf)) {
         return true;
       }
     }
@@ -107,6 +138,38 @@ export class RoadLane extends Lane {
   }
 
   update(delta: number): void {
+    // Proximity-based speed modulation — cars slow when close to the car ahead
+    const totalWidth = LANE_WIDTH + 2;
+    const threshold = 3.0;
+    const minMult = 0.15;
+
+    for (const car of this.cars) {
+      let minAheadDist = Infinity;
+      const cx = car.mesh.position.x;
+
+      for (const other of this.cars) {
+        if (other === car) continue;
+        if (other.direction !== car.direction) continue;
+
+        let dx: number;
+        if (car.direction > 0) {
+          dx = other.mesh.position.x - cx;
+          if (dx < 0) dx += totalWidth;
+        } else {
+          dx = cx - other.mesh.position.x;
+          if (dx < 0) dx += totalWidth;
+        }
+        if (dx < minAheadDist) minAheadDist = dx;
+      }
+
+      if (minAheadDist < threshold) {
+        const t = minAheadDist / threshold;
+        car.speedMult = minMult + (1 - minMult) * t * t;
+      } else {
+        car.speedMult = 1.0;
+      }
+    }
+
     for (const car of this.cars) {
       car.update(delta);
     }
