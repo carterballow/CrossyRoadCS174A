@@ -12,11 +12,11 @@ export class RoadLane extends Lane {
 
     const tex = createRoadTexture();
     tex.repeat.set(LANE_WIDTH / 4, 1);
-    const strip = this.createStrip(0x1a1a1a, tex);
+    const strip = this.createStrip(0x222222, tex);
     this.mesh.add(strip);
 
     // dashed center line
-    const dashMat = new THREE.MeshStandardMaterial({ color: 0x555555 });
+    const dashMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
     const dashGeo = new THREE.PlaneGeometry(0.3, 0.06);
     for (let x = -LANE_WIDTH / 2; x < LANE_WIDTH / 2; x += 0.8) {
       const dash = new THREE.Mesh(dashGeo, dashMat);
@@ -25,28 +25,44 @@ export class RoadLane extends Lane {
       this.mesh.add(dash);
     }
 
-    // Streetlights along the road edges
-    const poleMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+    // Streetlights along road edges — bright sodium-vapor glow
+    const poleMat = new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.5, roughness: 0.4 });
     const lampMat = new THREE.MeshStandardMaterial({
       color: 0xffcc66,
-      emissive: 0xffcc66,
-      emissiveIntensity: 0.9,
+      emissive: 0xffdd88,
+      emissiveIntensity: 2.0,
     });
-    const poleGeo = new THREE.BoxGeometry(0.08, 1.2, 0.08);
-    const lampGeo = new THREE.BoxGeometry(0.15, 0.08, 0.15);
-    for (let x = -6; x <= 6; x += 6) {
-      for (const zSide of [-0.6, 0.6]) {
-        const pole = new THREE.Mesh(poleGeo, poleMat);
-        pole.position.set(x, 0.6, zSide);
-        this.mesh.add(pole);
-        const lamp = new THREE.Mesh(lampGeo, lampMat);
-        lamp.position.set(x, 1.22, zSide);
-        this.mesh.add(lamp);
+    const poleGeo = new THREE.BoxGeometry(0.08, 1.4, 0.08);
+    const lampGeo = new THREE.BoxGeometry(0.2, 0.1, 0.2);
+    for (let x = -6; x <= 6; x += 4) {
+      const side = (x / 4) % 2 === 0 ? -0.6 : 0.6;
+      const pole = new THREE.Mesh(poleGeo, poleMat);
+      pole.position.set(x, 0.7, side);
+      this.mesh.add(pole);
+      const lamp = new THREE.Mesh(lampGeo, lampMat);
+      lamp.position.set(x, 1.42, side);
+      this.mesh.add(lamp);
 
-        const light = new THREE.PointLight(0xffcc66, 0.6, 5, 2);
-        light.position.set(x, 1.2, zSide);
-        this.mesh.add(light);
-      }
+      // Bright warm pool of light
+      const light = new THREE.PointLight(0xffcc66, 2.5, 8, 1.5);
+      light.position.set(x, 1.4, side);
+      this.mesh.add(light);
+    }
+
+    // Ground light splash — warm spot on the road surface
+    const splashMat = new THREE.MeshStandardMaterial({
+      color: 0x332200,
+      emissive: 0xffaa33,
+      emissiveIntensity: 0.15,
+      transparent: true,
+      opacity: 0.3,
+    });
+    const splashGeo = new THREE.PlaneGeometry(2.5, 0.8);
+    for (let x = -6; x <= 6; x += 4) {
+      const splash = new THREE.Mesh(splashGeo, splashMat);
+      splash.rotation.x = -Math.PI / 2;
+      splash.position.set(x, 0.012, 0);
+      this.mesh.add(splash);
     }
 
     const dir = direction ?? (Math.random() > 0.5 ? 1 : -1);

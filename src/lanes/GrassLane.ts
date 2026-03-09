@@ -13,12 +13,12 @@ export class GrassLane extends Lane {
     // Dark grass strip with texture
     const tex = createGrassTexture();
     tex.repeat.set(LANE_WIDTH, 1);
-    const strip = this.createStrip(0x1a3a1a, tex);
+    const strip = this.createStrip(0x1e4420, tex);
     this.mesh.add(strip);
 
     // Subtle edge lines
     const edgeGeo = new THREE.PlaneGeometry(LANE_WIDTH, 0.04);
-    const edgeMat = new THREE.MeshStandardMaterial({ color: 0x0f2a0f });
+    const edgeMat = new THREE.MeshStandardMaterial({ color: 0x142e14 });
     for (const zOff of [-0.5, 0.5]) {
       const edge = new THREE.Mesh(edgeGeo, edgeMat);
       edge.rotation.x = -Math.PI / 2;

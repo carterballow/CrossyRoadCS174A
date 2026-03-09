@@ -10,8 +10,8 @@ import { RiverLane } from '../lanes/RiverLane';
 import { HUD } from '../ui/HUD';
 import { ParticleSystem } from '../entities/Particles';
 
-const CAM_OFFSET = new THREE.Vector3(0, 6, -8);
-const CAM_LOOK_OFFSET = new THREE.Vector3(0, 1, 4);
+const CAM_OFFSET = new THREE.Vector3(0, 4.5, -5.5);
+const CAM_LOOK_OFFSET = new THREE.Vector3(0, 0.5, 5);
 const CAM_LERP_SPEED = 5;
 
 const LANES_AHEAD = 20;
