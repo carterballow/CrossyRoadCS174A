@@ -3,6 +3,7 @@ import { Lane, LANE_WIDTH } from './Lane';
 import { Tree } from '../entities/Tree';
 import { Player } from '../entities/Player';
 import { createGrassTexture } from '../scene/Textures';
+import { scatterPuddles } from '../scene/PuddleShader';
 
 // Shared geometry/materials across all grass lanes
 const edgeGeo = new THREE.PlaneGeometry(LANE_WIDTH, 0.04);
@@ -13,6 +14,8 @@ const rockMats = rockColors.map(c => new THREE.MeshStandardMaterial({ color: c, 
 
 export class GrassLane extends Lane {
   private trees: Tree[] = [];
+  private puddleMat: THREE.ShaderMaterial | null = null;
+  private puddleTime = 0;
 
   constructor(zIndex: number, treePositions?: number[]) {
     super('grass', zIndex);
@@ -51,6 +54,8 @@ export class GrassLane extends Lane {
       rock.rotation.y = Math.random() * Math.PI;
       this.mesh.add(rock);
     }
+
+    this.puddleMat = scatterPuddles(this.mesh);
   }
 
   checkCollision(player: Player): boolean {
@@ -84,5 +89,10 @@ export class GrassLane extends Lane {
     return positions;
   }
 
-  update(_delta: number): void {}
+  update(delta: number): void {
+    if (this.puddleMat) {
+      this.puddleTime += delta;
+      this.puddleMat.uniforms.uTime.value = this.puddleTime;
+    }
+  }
 }

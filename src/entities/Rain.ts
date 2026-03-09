@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 
-const RAIN_COUNT = 800;
+const RAIN_COUNT = 200;
 const RAIN_AREA = 16;
 const RAIN_HEIGHT = 8;
-const FALL_SPEED = 12;
+const FALL_SPEED = 8;
 
-const SPLASH_POOL = 50;
-const SPLASH_LIFE = 0.35;
+const SPLASH_POOL = 20;
+const SPLASH_LIFE = 0.3;
 
 // Rain drop geometry — thin elongated box (streak)
 const dropGeo = new THREE.BoxGeometry(0.008, 0.15, 0.008);
