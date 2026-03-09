@@ -3,6 +3,7 @@ import { Lane, LANE_WIDTH } from './Lane';
 import { Car } from '../entities/Car';
 import { Player } from '../entities/Player';
 import { createRoadTexture } from '../scene/Textures';
+import { scatterPuddles } from '../scene/PuddleShader';
 
 // Shared geometry/materials across all road lanes
 const dashMat = new THREE.MeshStandardMaterial({
@@ -24,6 +25,8 @@ const headGeo = new THREE.BoxGeometry(0.12, 0.06, 0.12);
 
 export class RoadLane extends Lane {
   private cars: Car[] = [];
+  private puddleMat: THREE.ShaderMaterial | null = null;
+  private puddleTime = 0;
 
   constructor(zIndex: number, direction?: number, speed?: number, carCount?: number) {
     super('road', zIndex);
@@ -118,6 +121,8 @@ export class RoadLane extends Lane {
         this.cars.push(car);
       }
     }
+
+    this.puddleMat = scatterPuddles(this.mesh);
   }
 
   checkCollision(player: Player): boolean {
@@ -172,6 +177,11 @@ export class RoadLane extends Lane {
 
     for (const car of this.cars) {
       car.update(delta);
+    }
+
+    if (this.puddleMat) {
+      this.puddleTime += delta;
+      this.puddleMat.uniforms.uTime.value = this.puddleTime;
     }
   }
 }

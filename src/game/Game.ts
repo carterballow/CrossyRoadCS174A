@@ -41,6 +41,11 @@ export class Game {
   private lastLaneType = 'grass';
   private consecutiveCount = 0;
 
+  // Idle penalty state
+  private lastRowZ = 0;
+  private rowIdleTime = 0;
+  private idlePenaltyAccum = 0;
+
   constructor() {
     this.sceneMgr = new SceneManager();
     this.input = new InputManager();
@@ -151,8 +156,8 @@ export class Game {
   }
 
   private getDifficulty(z: number): number {
-    // Ramps from 1.0 at z=0 to ~2.0 around z=100, capping at 2.5
-    return Math.min(2.5, 1 + Math.max(0, z) * 0.012);
+    // Ramps aggressively: 2.0 by z=15, 3.0 by z=30, caps at 4.0
+    return Math.min(4.0, 1 + Math.max(0, z) * 0.065);
   }
 
   private createLane(type: string, z: number): Lane {
@@ -226,7 +231,7 @@ export class Game {
       lane.update(delta);
     }
 
-    this.updateScore();
+    this.updateScore(delta);
     this.manageLanes();
     this.checkDeathCollisions();
     this.checkOutOfBounds();
@@ -266,17 +271,37 @@ export class Game {
 
     this.score = 0;
     this.maxZ = 0;
+    this.lastRowZ = 0;
+    this.rowIdleTime = 0;
+    this.idlePenaltyAccum = 0;
     this.hud.setScore(0);
     this.state = 'playing';
     this.hud.showPlaying();
   }
 
-  private updateScore(): void {
+  private updateScore(delta: number): void {
     const currentZ = Math.round(this.player.position.z);
     if (currentZ > this.maxZ) {
       this.maxZ = currentZ;
       this.score = this.maxZ;
       this.hud.setScore(this.score);
+      this.lastRowZ = currentZ;
+      this.rowIdleTime = 0;
+      this.idlePenaltyAccum = 0;
+    } else if (currentZ !== this.lastRowZ) {
+      this.lastRowZ = currentZ;
+      this.rowIdleTime = 0;
+      this.idlePenaltyAccum = 0;
+    } else {
+      this.rowIdleTime += delta;
+      if (this.rowIdleTime >= 5 && this.score > 0) {
+        this.idlePenaltyAccum += delta;
+        if (this.idlePenaltyAccum >= 1) {
+          this.idlePenaltyAccum -= 1;
+          this.score = Math.max(0, this.score - 1);
+          this.hud.setScore(this.score);
+        }
+      }
     }
   }
 
