@@ -240,12 +240,13 @@ export class Game {
   private die(): void {
     this.state = 'dead';
 
-    if (this.score > this.highScore) {
+    const isNewBest = this.score > this.highScore;
+    if (isNewBest) {
       this.highScore = this.score;
       this.saveHighScore(this.highScore);
     }
 
-    this.hud.showDeath(this.score, this.highScore);
+    this.hud.showDeath(this.score, this.highScore, isNewBest);
   }
 
   private handleInput(): void {
