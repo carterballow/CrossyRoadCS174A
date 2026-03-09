@@ -26,10 +26,10 @@ export class RailwayLane extends Lane {
       this.mesh.add(rail);
     }
 
-    // wooden ties
+    // wooden ties — only in visible play area for performance
     const tieMat = new THREE.MeshStandardMaterial({ color: 0x2a1a0e });
     const tieGeo = new THREE.BoxGeometry(0.08, 0.03, 0.7);
-    for (let x = -LANE_WIDTH / 2; x < LANE_WIDTH / 2; x += 0.5) {
+    for (let x = -14; x < 14; x += 0.5) {
       const tie = new THREE.Mesh(tieGeo, tieMat);
       tie.position.set(x, 0.015, 0);
       this.mesh.add(tie);
@@ -42,13 +42,13 @@ export class RailwayLane extends Lane {
     this.train = new Train(dir, wait);
     this.mesh.add(this.train.mesh);
 
-    // warning signals on both sides of the lane
+    // warning signals at edges of play area
     const sig1 = this.train.signalLight.clone();
-    sig1.position.set(-LANE_WIDTH / 2 + 0.5, 0.4, 0);
+    sig1.position.set(-9.5, 0.4, 0);
     this.mesh.add(sig1);
 
     const sig2 = this.train.signalLight;
-    sig2.position.set(LANE_WIDTH / 2 - 0.5, 0.4, 0);
+    sig2.position.set(9.5, 0.4, 0);
     this.mesh.add(sig2);
   }
 

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {Player} from "../entities/Player";
-export const LANE_WIDTH = 20;
+export const LANE_WIDTH = 50;
 
 export type LaneType = 'grass' | 'road' | 'railway' | 'river';
 

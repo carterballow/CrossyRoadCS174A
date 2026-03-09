@@ -50,7 +50,7 @@ export class GrassLane extends Lane {
   }
 
   private randomTreePositions(): number[] {
-    const half = LANE_WIDTH / 2 - 1;
+    const half = 9; // trees only in play area, not across full lane width
     const count = Math.floor(Math.random() * 4) + 1;
     const positions: number[] = [];
     for (let i = 0; i < count; i++) {

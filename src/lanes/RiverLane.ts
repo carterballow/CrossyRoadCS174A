@@ -24,7 +24,7 @@ export class RiverLane extends Lane {
     this.direction = dir;
 
     // Water surface — custom shader with vertex-displaced waves
-    const waterGeo = new THREE.PlaneGeometry(LANE_WIDTH, 1, 80, 12);
+    const waterGeo = new THREE.PlaneGeometry(LANE_WIDTH, 1, 120, 12);
     this.waterMat = createWaterMaterial(dir);
     const water = new THREE.Mesh(waterGeo, this.waterMat);
     water.rotation.x = -Math.PI / 2;
@@ -42,7 +42,7 @@ export class RiverLane extends Lane {
     }
 
     const spd = speed ?? 0.8 + Math.random() * 1.2;
-    const count = logCount ?? Math.floor(Math.random() * 2) + 2;
+    const count = logCount ?? Math.floor(Math.random() * 3) + 4;
     const bounds = LANE_WIDTH / 2;
     const logLength = 1.5 + Math.random() * 1.5;
     const spacing = LANE_WIDTH / count;
@@ -78,6 +78,10 @@ export class RiverLane extends Lane {
   getLogVelocity(): number {
     if (this.logs.length === 0) return 0;
     return this.direction * this.logs[0].speed;
+  }
+
+  setLightDir(dir: THREE.Vector3): void {
+    this.waterMat.uniforms.uLightDir.value.copy(dir);
   }
 
   update(delta: number): void {
