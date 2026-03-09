@@ -40,6 +40,17 @@ export class SceneManager {
     document.body.appendChild(bgImg);
     document.body.style.backgroundColor = '#0e1820';
 
+    // Vignette overlay — CSS radial gradient, no GPU cost
+    const vignette = document.createElement('div');
+    Object.assign(vignette.style, {
+      position: 'fixed',
+      inset: '0',
+      pointerEvents: 'none',
+      zIndex: '10',
+      background: 'radial-gradient(ellipse at center, transparent 55%, rgba(5,8,12,0.6) 100%)',
+    });
+    document.body.appendChild(vignette);
+
     this.scene = new THREE.Scene();
     // Linear fog — visible fade starts at 8 units, fully fogged at 25
     // Color matched to dark teal-black base of skyline image

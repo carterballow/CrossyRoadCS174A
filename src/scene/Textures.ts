@@ -64,15 +64,75 @@ export function createGrassTexture(): THREE.CanvasTexture {
 
 export function createRoadTexture(): THREE.CanvasTexture {
   if (!_roadTex) {
-    _roadTex = createCanvasTexture(32, 8, (ctx) => {
-      // Asphalt — dark greys with subtle variation
-      fillBlockyNoise(ctx, 32, 8, 20, 20, 22, 15, 15, 12);
-      // Lane edge markings (top and bottom rows)
-      for (let x = 0; x < 32; x++) {
+    _roadTex = createCanvasTexture(64, 32, (ctx) => {
+      // Base asphalt — mid-grey so detail is visible after color multiply
+      fillBlockyNoise(ctx, 64, 32, 40, 40, 42, 18, 18, 14);
+
+      // Worn lighter patches — tire wear, old repairs
+      for (let i = 0; i < 10; i++) {
+        const px = Math.floor(Math.random() * 54);
+        const py = Math.floor(Math.random() * 24);
+        const pw = Math.floor(Math.random() * 8) + 2;
+        const ph = Math.floor(Math.random() * 4) + 2;
+        const v = 60 + Math.floor(Math.random() * 25);
+        ctx.fillStyle = `rgb(${v},${v},${v - 4})`;
+        ctx.fillRect(px, py, pw, ph);
+      }
+
+      // Cracks — near-black jagged lines
+      for (let c = 0; c < 6; c++) {
+        let cx = Math.floor(Math.random() * 64);
+        let cy = Math.floor(Math.random() * 32);
+        const len = 10 + Math.floor(Math.random() * 16);
+        for (let s = 0; s < len; s++) {
+          if (cx >= 0 && cx < 64 && cy >= 0 && cy < 32) {
+            ctx.fillStyle = `rgb(${4 + Math.floor(Math.random() * 8)},${4 + Math.floor(Math.random() * 6)},${4 + Math.floor(Math.random() * 6)})`;
+            ctx.fillRect(cx, cy, 1, 1);
+          }
+          const dir = Math.random();
+          if (dir < 0.5) cx += 1;
+          else if (dir < 0.7) cx -= 1;
+          else if (dir < 0.85) cy += 1;
+          else cy -= 1;
+        }
+      }
+
+      // Oil / dark wet stains
+      for (let i = 0; i < 6; i++) {
+        const sx = Math.floor(Math.random() * 58);
+        const sy = Math.floor(Math.random() * 26);
+        const sw = Math.floor(Math.random() * 4) + 2;
+        const sh = Math.floor(Math.random() * 3) + 1;
+        ctx.fillStyle = `rgb(${12 + Math.floor(Math.random() * 6)},${12 + Math.floor(Math.random() * 5)},${15 + Math.floor(Math.random() * 5)})`;
+        ctx.fillRect(sx, sy, sw, sh);
+      }
+
+      // Bright aggregate speckle — gravel bits poking through
+      for (let i = 0; i < 40; i++) {
+        const gx = Math.floor(Math.random() * 64);
+        const gy = Math.floor(Math.random() * 32);
+        const v = 70 + Math.floor(Math.random() * 30);
+        ctx.fillStyle = `rgb(${v},${v},${v - 5})`;
+        ctx.fillRect(gx, gy, 1, 1);
+      }
+
+      // Patched repair strips — slightly different tone rectangles
+      for (let i = 0; i < 3; i++) {
+        const px = Math.floor(Math.random() * 50);
+        const py = Math.floor(Math.random() * 28);
+        const pw = Math.floor(Math.random() * 10) + 4;
+        const ph = Math.floor(Math.random() * 2) + 1;
         const v = 35 + Math.floor(Math.random() * 10);
+        ctx.fillStyle = `rgb(${v},${v + 2},${v})`;
+        ctx.fillRect(px, py, pw, ph);
+      }
+
+      // Lane edge markings
+      for (let x = 0; x < 64; x++) {
+        const v = 55 + Math.floor(Math.random() * 15);
         ctx.fillStyle = `rgb(${v},${v},${v})`;
         ctx.fillRect(x, 0, 1, 1);
-        ctx.fillRect(x, 7, 1, 1);
+        ctx.fillRect(x, 31, 1, 1);
       }
     }, true);
   }
