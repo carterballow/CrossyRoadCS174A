@@ -1,26 +1,48 @@
 import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import buildingsBg from '../ui/buildings.webp';
 
 export class SceneManager {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene: THREE.Scene;
   readonly camera: THREE.PerspectiveCamera;
   readonly dirLight: THREE.DirectionalLight;
+  private composer: EffectComposer;
 
   constructor() {
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    // Transparent canvas so CSS background shows through
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.3;
+    this.renderer.toneMappingExposure = 1.6;
+    this.renderer.setClearColor(0x000000, 0);
     document.body.appendChild(this.renderer.domElement);
 
+    // City skyline as page background behind transparent canvas
+    document.body.style.margin = '0';
+    document.body.style.overflow = 'hidden';
+    const bgImg = document.createElement('img');
+    bgImg.src = buildingsBg;
+    Object.assign(bgImg.style, {
+      position: 'fixed',
+      left: '0',
+      width: '100%',
+      bottom: '50%',
+      zIndex: '-1',
+      pointerEvents: 'none',
+    });
+    document.body.appendChild(bgImg);
+    document.body.style.backgroundColor = '#0e1820';
+
     this.scene = new THREE.Scene();
-    // Dark night sky
-    this.scene.background = new THREE.Color(0x0a0a1a);
-    // Exponential fog for distance fade into darkness
-    this.scene.fog = new THREE.FogExp2(0x0a0a1a, 0.025);
+    // Fog color matched to the dark teal-black base of the skyline image
+    this.scene.fog = new THREE.FogExp2(0x0e1820, 0.028);
 
     this.camera = new THREE.PerspectiveCamera(
       60,
@@ -31,21 +53,48 @@ export class SceneManager {
 
     this.dirLight = this.setupLighting();
     this.createMoon();
-    this.createSkyline();
+
+    // Post-processing: Bloom for emissive glow
+    const size = this.renderer.getSize(new THREE.Vector2());
+    const renderTarget = new THREE.WebGLRenderTarget(size.x, size.y, {
+      type: THREE.HalfFloatType,
+      format: THREE.RGBAFormat,
+    });
+    this.composer = new EffectComposer(this.renderer, renderTarget);
+
+    const renderPass = new RenderPass(this.scene, this.camera);
+    renderPass.clearAlpha = 0;
+    this.composer.addPass(renderPass);
+
+    const bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(size.x / 2, size.y / 2),
+      0.6,   // strength — moderate glow
+      0.4,   // radius — how far the glow spreads
+      0.85,  // threshold — only bright emissives bloom
+    );
+    this.composer.addPass(bloomPass);
+
+    const outputPass = new OutputPass();
+    this.composer.addPass(outputPass);
 
     window.addEventListener('resize', this.onResize);
   }
 
   private setupLighting(): THREE.DirectionalLight {
-    // Warmer, brighter ambient for grimy streetlit feel
-    const ambient = new THREE.AmbientLight(0x2a2035, 1.4);
+    // Ambient matched to building mid-shadow tones — steel blue-grey
+    const ambient = new THREE.AmbientLight(0x1a2535, 1.6);
     this.scene.add(ambient);
 
-    // Slightly warm directional to simulate city glow bounce
-    const dir = new THREE.DirectionalLight(0x6677aa, 1.0);
+    // Overhead warm fill — amber window-glow spill from the city
+    const overheadDir = new THREE.DirectionalLight(0xcc8844, 0.35);
+    overheadDir.position.set(0, 15, 0);
+    this.scene.add(overheadDir);
+
+    // Moonlight directional — teal-blue to match the sky haze
+    const dir = new THREE.DirectionalLight(0x5a7a9a, 0.9);
     dir.position.set(10, 20, 10);
     dir.castShadow = true;
-    dir.shadow.mapSize.set(1024, 1024);
+    dir.shadow.mapSize.set(512, 512);
     dir.shadow.bias = -0.001;
     dir.shadow.normalBias = 0.02;
     dir.shadow.camera.near = 0.5;
@@ -57,85 +106,28 @@ export class SceneManager {
     this.scene.add(dir);
     this.scene.add(dir.target);
 
-    // Hemisphere: warm sodium-vapor sky tint, dark ground
-    const hemi = new THREE.HemisphereLight(0x332a1a, 0x0a0a0a, 0.6);
+    // Hemisphere: teal atmosphere haze from above, deep building shadow below
+    const hemi = new THREE.HemisphereLight(0x1e2838, 0x0e1418, 1.0);
     this.scene.add(hemi);
 
     return dir;
   }
 
   private createMoon(): void {
-    const moonGeo = new THREE.SphereGeometry(8, 32, 32);
-    const moonMat = new THREE.MeshBasicMaterial({ color: 0xdde8ff });
-    const moon = new THREE.Mesh(moonGeo, moonMat);
-    moon.position.set(-40, 60, 120);
-    this.scene.add(moon);
-
-    // Subtle moon glow
-    const glowGeo = new THREE.SphereGeometry(12, 16, 16);
-    const glowMat = new THREE.MeshBasicMaterial({
-      color: 0x8899bb,
-      transparent: true,
-      opacity: 0.15,
-    });
-    const glow = new THREE.Mesh(glowGeo, glowMat);
-    glow.position.copy(moon.position);
-    this.scene.add(glow);
-  }
-
-  private createSkyline(): void {
-    const skylineGroup = new THREE.Group();
-
-    // Shared materials — MeshBasicMaterial bypasses lighting entirely
-    const darkMat = new THREE.MeshBasicMaterial({ color: 0x080810 });
-    const windowColors = [0xffeeaa, 0xffd866, 0xaaddff, 0xffffff];
-
-    // Generate rows of buildings at different depths
-    for (const baseZ of [80, 95, 115]) {
-      const density = baseZ < 100 ? 5 : 7;
-      for (let x = -130; x <= 130; x += density + Math.random() * 3) {
-        const width = 2.5 + Math.random() * 6;
-        const height = 8 + Math.random() * (baseZ < 100 ? 45 : 25);
-        const depth = 2 + Math.random() * 3;
-        const bz = baseZ + Math.random() * 10;
-
-        const buildingGeo = new THREE.BoxGeometry(width, height, depth);
-        const building = new THREE.Mesh(buildingGeo, darkMat);
-        building.position.set(x, height / 2, bz);
-        skylineGroup.add(building);
-
-        // Window strips — a few lit rows per building
-        const wColor = windowColors[Math.floor(Math.random() * windowColors.length)];
-        const wMat = new THREE.MeshBasicMaterial({
-          color: wColor,
-          transparent: true,
-          opacity: 0.5 + Math.random() * 0.4,
-        });
-        const stripCount = Math.floor(height / 5) + 1;
-        for (let s = 0; s < stripCount; s++) {
-          if (Math.random() < 0.3) continue;
-          const sy = 2 + s * (height / stripCount);
-          if (sy > height - 1) continue;
-          const sw = width * (0.5 + Math.random() * 0.4);
-          const sh = 0.6 + Math.random() * 0.8;
-          const stripGeo = new THREE.PlaneGeometry(sw, sh);
-          const strip = new THREE.Mesh(stripGeo, wMat);
-          strip.position.set(x, sy, bz - depth / 2 - 0.01);
-          skylineGroup.add(strip);
-        }
-      }
-    }
-
-    this.scene.add(skylineGroup);
+    // Off-camera moonlight — shines from upper-left, cool pale blue
+    const moonLight = new THREE.DirectionalLight(0xaabbdd, 0.6);
+    moonLight.position.set(-30, 40, 10);
+    this.scene.add(moonLight);
   }
 
   private onResize = (): void => {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.composer.setSize(window.innerWidth, window.innerHeight);
   };
 
   render(): void {
-    this.renderer.render(this.scene, this.camera);
+    this.composer.render();
   }
 }
