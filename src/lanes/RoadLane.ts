@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { Lane, LANE_WIDTH } from './Lane';
 import { Car } from '../entities/Car';
-import {Player} from "../entities/Player";
+import { Player } from '../entities/Player';
+import { createRoadTexture } from '../scene/Textures';
 
 export class RoadLane extends Lane {
   private cars: Car[] = [];
@@ -9,7 +10,9 @@ export class RoadLane extends Lane {
   constructor(zIndex: number, direction?: number, speed?: number, carCount?: number) {
     super('road', zIndex);
 
-    const strip = this.createStrip(0x1a1a1a);
+    const tex = createRoadTexture();
+    tex.repeat.set(LANE_WIDTH / 4, 1);
+    const strip = this.createStrip(0x1a1a1a, tex);
     this.mesh.add(strip);
 
     // dashed center line
