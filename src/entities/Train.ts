@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Entity } from './Entity';
+import { getTrainBodyTexture, getTrainWagonTexture, getWheelTexture } from '../scene/Textures';
 
 const TRAIN_LENGTH = 8;
 const TRAIN_SPEED = 12;
@@ -24,11 +25,15 @@ const winGeo = new THREE.BoxGeometry(1.2, 0.15, 0.02);
 const wheelGeo = new THREE.BoxGeometry(0.3, 0.18, 0.08);
 const sigGeo = new THREE.BoxGeometry(0.15, 0.8, 0.15);
 
-// Shared materials
-const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1a1a2e, metalness: 0.5, roughness: 0.4 });
-const trainCabinMat = new THREE.MeshStandardMaterial({ color: 0x222238, metalness: 0.4, roughness: 0.4 });
+// Shared materials with pixelated textures
+const trainBodyTex = getTrainBodyTexture();
+const trainWagonTex = getTrainWagonTexture();
+const wheelTex = getWheelTexture();
+
+const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1a1a2e, map: trainBodyTex, metalness: 0.5, roughness: 0.4 });
+const trainCabinMat = new THREE.MeshStandardMaterial({ color: 0x222238, map: trainBodyTex, metalness: 0.4, roughness: 0.4 });
 const roofMat = new THREE.MeshStandardMaterial({ color: 0x2a2a3a, metalness: 0.3, roughness: 0.5 });
-const noseMat = new THREE.MeshStandardMaterial({ color: 0x1e1e30, metalness: 0.5, roughness: 0.35 });
+const noseMat = new THREE.MeshStandardMaterial({ color: 0x1e1e30, map: trainBodyTex, metalness: 0.5, roughness: 0.35 });
 const stackMat = new THREE.MeshStandardMaterial({ color: 0x333340 });
 const locoLightMat = new THREE.MeshStandardMaterial({
   color: 0xffffaa,
@@ -38,7 +43,7 @@ const locoLightMat = new THREE.MeshStandardMaterial({
 const plowMat = new THREE.MeshStandardMaterial({ color: 0x2a2a35, metalness: 0.6, roughness: 0.3 });
 const stripeMat = new THREE.MeshStandardMaterial({ color: 0xcc8833 });
 const underMat = new THREE.MeshStandardMaterial({ color: 0x0a0a12 });
-const wagonMat = new THREE.MeshStandardMaterial({ color: 0x12121e, metalness: 0.3, roughness: 0.6 });
+const wagonMat = new THREE.MeshStandardMaterial({ color: 0x12121e, map: trainWagonTex, metalness: 0.3, roughness: 0.6 });
 const wagonRoofMat = new THREE.MeshStandardMaterial({ color: 0x1a1a28, metalness: 0.2, roughness: 0.6 });
 const connectorMat = new THREE.MeshStandardMaterial({ color: 0x0a0a10 });
 const winMat = new THREE.MeshStandardMaterial({
@@ -46,7 +51,7 @@ const winMat = new THREE.MeshStandardMaterial({
   emissive: 0x222233,
   emissiveIntensity: 0.3,
 });
-const trainWheelMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a });
+const trainWheelMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, map: wheelTex });
 
 export class Train extends Entity {
   private direction: number;

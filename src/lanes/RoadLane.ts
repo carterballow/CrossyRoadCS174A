@@ -5,7 +5,12 @@ import { Player } from '../entities/Player';
 import { createRoadTexture } from '../scene/Textures';
 
 // Shared geometry/materials across all road lanes
-const dashMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.3 });
+const dashMat = new THREE.MeshStandardMaterial({
+  color: 0x888888,
+  roughness: 0.3,
+  emissive: 0x333322,
+  emissiveIntensity: 0.15,
+});
 const dashGeo = new THREE.PlaneGeometry(0.3, 0.06);
 const poleMat = new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.6, roughness: 0.3 });
 const lampMat = new THREE.MeshStandardMaterial({
@@ -27,7 +32,8 @@ export class RoadLane extends Lane {
     tex.repeat.set(LANE_WIDTH / 4, 1);
     const strip = this.createStrip(0x222222, tex);
     const roadMat = strip.material as THREE.MeshStandardMaterial;
-    roadMat.roughness = 0.85;
+    roadMat.roughness = 0.75;
+    roadMat.metalness = 0.05;
     this.mesh.add(strip);
 
     // dashed center line — InstancedMesh instead of individual meshes
@@ -47,29 +53,23 @@ export class RoadLane extends Lane {
     dashInstanced.count = idx;
     this.mesh.add(dashInstanced);
 
-    // Streetlights — clean pole + arm + lamp head
-    for (const x of [-7, 7]) {
-      const side = (Math.round(x / 4) % 2 === 0) ? -0.55 : 0.55;
+    // Streetlights — randomly placed, 1-2 per lane
+    const lightCount = Math.random() > 0.4 ? 2 : 1;
+    for (let i = 0; i < lightCount; i++) {
+      const x = Math.floor(Math.random() * 14 - 7) + Math.random() * 0.5;
+      const side = Math.random() > 0.5 ? -0.55 : 0.55;
 
-      // vertical pole
       const pole = new THREE.Mesh(poleGeo, poleMat);
       pole.position.set(x, 0.75, side);
       this.mesh.add(pole);
 
-      // horizontal arm toward road center
       const arm = new THREE.Mesh(armGeo, poleMat);
       arm.position.set(x, 1.5, side * 0.6);
       this.mesh.add(arm);
 
-      // lamp head (small box under arm tip)
       const head = new THREE.Mesh(headGeo, lampMat);
       head.position.set(x, 1.47, side * 0.35);
       this.mesh.add(head);
-
-      // point light — clean warm white, tight range for performance
-      const light = new THREE.PointLight(0xffe8c0, 2.0, 4, 2);
-      light.position.set(x, 1.45, side * 0.35);
-      this.mesh.add(light);
     }
 
     const dir = direction ?? (Math.random() > 0.5 ? 1 : -1);

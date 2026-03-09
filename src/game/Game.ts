@@ -18,7 +18,7 @@ const WATER_LIGHT_DIR = new THREE.Vector3(10, 20, 10).normalize();
 const LANES_AHEAD = 15;
 const LANES_BEHIND = 5;
 
-type GameState = 'menu' | 'playing' | 'dead';
+type GameState = 'menu' | 'playing' | 'dying' | 'dead';
 
 export class Game {
   private sceneMgr: SceneManager;
@@ -189,6 +189,18 @@ export class Game {
       return;
     }
 
+    if (this.state === 'dying') {
+      this.player.update(delta);
+      this.particles.update(delta);
+      for (const [, lane] of this.laneMap) lane.update(delta);
+      if (this.player.deathAnimDone) {
+        this.finishDeath();
+      }
+      this.updateCamera(delta);
+      this.sceneMgr.render();
+      return;
+    }
+
     if (this.state === 'dead') {
       this.handleDeadInput();
       this.particles.update(delta);
@@ -260,7 +272,12 @@ export class Game {
     }
   }
 
-  private die(): void {
+  private die(type: 'squash' | 'drown'): void {
+    this.state = 'dying';
+    this.player.playDeath(type);
+  }
+
+  private finishDeath(): void {
     this.state = 'dead';
 
     const isNewBest = this.score > this.highScore;
@@ -328,13 +345,13 @@ export class Game {
     if (lane.type === 'road' || lane.type === 'railway') {
       if (lane.checkCollision(this.player)) {
         this.particles.emitImpact(this.player.position);
-        this.die();
+        this.die('squash');
       }
     }
     if (lane.type === 'river') {
       if (lane.checkCollision(this.player)) {
         this.particles.emitSplash(this.player.position);
-        this.die();
+        this.die('drown');
       }
     }
   }
@@ -342,7 +359,7 @@ export class Game {
   private checkOutOfBounds(): void {
     if (Math.abs(this.player.position.x) > 9.5) {
       this.particles.emitSplash(this.player.position);
-      this.die();
+      this.die('drown');
     }
   }
 

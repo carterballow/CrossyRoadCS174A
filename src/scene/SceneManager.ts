@@ -41,8 +41,9 @@ export class SceneManager {
     document.body.style.backgroundColor = '#0e1820';
 
     this.scene = new THREE.Scene();
-    // Fog color matched to the dark teal-black base of the skyline image
-    this.scene.fog = new THREE.FogExp2(0x0e1820, 0.028);
+    // Linear fog — visible fade starts at 8 units, fully fogged at 25
+    // Color matched to dark teal-black base of skyline image
+    this.scene.fog = new THREE.Fog(0x0e1820, 8, 25);
 
     this.camera = new THREE.PerspectiveCamera(
       60,
@@ -64,6 +65,7 @@ export class SceneManager {
 
     const renderPass = new RenderPass(this.scene, this.camera);
     renderPass.clearAlpha = 0;
+    renderPass.clearColor = new THREE.Color(0x0e1820);
     this.composer.addPass(renderPass);
 
     const bloomPass = new UnrealBloomPass(
@@ -90,8 +92,8 @@ export class SceneManager {
     overheadDir.position.set(0, 15, 0);
     this.scene.add(overheadDir);
 
-    // Moonlight directional — teal-blue to match the sky haze
-    const dir = new THREE.DirectionalLight(0x5a7a9a, 0.9);
+    // Moonlight directional — teal-blue matched to skyline haze
+    const dir = new THREE.DirectionalLight(0x6a8aaa, 1.8);
     dir.position.set(10, 20, 10);
     dir.castShadow = true;
     dir.shadow.mapSize.set(512, 512);
@@ -107,15 +109,15 @@ export class SceneManager {
     this.scene.add(dir.target);
 
     // Hemisphere: teal atmosphere haze from above, deep building shadow below
-    const hemi = new THREE.HemisphereLight(0x1e2838, 0x0e1418, 1.0);
+    const hemi = new THREE.HemisphereLight(0x2a3a4a, 0x0e1418, 1.4);
     this.scene.add(hemi);
 
     return dir;
   }
 
   private createMoon(): void {
-    // Off-camera moonlight — shines from upper-left, cool pale blue
-    const moonLight = new THREE.DirectionalLight(0xaabbdd, 0.6);
+    // Off-camera moonlight — shines from upper-left, teal-blue matched to skyline
+    const moonLight = new THREE.DirectionalLight(0x8aaabe, 2.0);
     moonLight.position.set(-30, 40, 10);
     this.scene.add(moonLight);
   }

@@ -5,12 +5,19 @@ const STEP = 1;
 const MOVE_DURATION = 0.12;
 const HOP_HEIGHT = 0.3;
 
+export type DeathType = 'squash' | 'drown' | null;
+
 export class Player extends Entity {
   private currentPos = new THREE.Vector3(0, 0, 0);
   private targetPos = new THREE.Vector3(0, 0, 0);
   private moveProgress = 1; // 1 = idle
   private targetRotationY = 0;
   private modelGroup: THREE.Group;
+
+  // Death animation state
+  private deathType: DeathType = null;
+  private deathTimer = 0;
+  private deathDuration = 0;
 
   constructor() {
     const group = new THREE.Group();
@@ -98,12 +105,20 @@ export class Player extends Entity {
     return this.moveProgress < 1;
   }
 
+  get isDying(): boolean {
+    return this.deathType !== null;
+  }
+
+  get deathAnimDone(): boolean {
+    return this.deathType !== null && this.deathTimer >= this.deathDuration;
+  }
+
   get position(): THREE.Vector3 {
     return this.mesh.position;
   }
 
   move(dx: number, dz: number): void {
-    if (this.isMoving) return;
+    if (this.isMoving || this.isDying) return;
 
     this.currentPos.copy(this.mesh.position);
     this.targetPos.set(
@@ -116,7 +131,25 @@ export class Player extends Entity {
     this.targetRotationY = Math.atan2(dx, dz);
   }
 
+  playDeath(type: 'squash' | 'drown'): void {
+    this.deathType = type;
+    this.deathTimer = 0;
+    this.deathDuration = type === 'squash' ? 0.4 : 0.8;
+  }
+
   update(delta: number): void {
+    if (this.isDying) {
+      this.deathTimer = Math.min(this.deathTimer + delta, this.deathDuration);
+      const t = this.deathTimer / this.deathDuration;
+
+      if (this.deathType === 'squash') {
+        this.updateSquashDeath(t);
+      } else {
+        this.updateDrownDeath(t);
+      }
+      return;
+    }
+
     const rot = this.mesh.rotation;
     const diff = this.targetRotationY - rot.y;
     const wrapped = Math.atan2(Math.sin(diff), Math.cos(diff));
@@ -144,6 +177,64 @@ export class Player extends Entity {
       this.mesh.position.copy(this.targetPos);
       this.modelGroup.position.y = 0;
       this.modelGroup.scale.set(1, 1, 1);
+    }
+  }
+
+  // Hit by car/train — pancake flat, pop up, spin, settle
+  private updateSquashDeath(t: number): void {
+    if (t < 0.3) {
+      // Slam down flat
+      const st = t / 0.3;
+      const ease = st * st;
+      this.modelGroup.scale.set(1 + ease * 1.2, Math.max(0.05, 1 - ease * 0.95), 1 + ease * 1.2);
+      this.modelGroup.position.y = 0;
+    } else if (t < 0.7) {
+      // Pop up and spin
+      const st = (t - 0.3) / 0.4;
+      const bounce = Math.sin(st * Math.PI);
+      this.modelGroup.position.y = bounce * 1.5;
+      this.modelGroup.scale.set(0.6 + bounce * 0.3, 0.6 + bounce * 0.3, 0.6 + bounce * 0.3);
+      this.mesh.rotation.y += 0.3;
+      this.mesh.rotation.z = st * Math.PI * 2;
+    } else {
+      // Fall back down, stay flat
+      const st = (t - 0.7) / 0.3;
+      const ease = st * st;
+      this.modelGroup.position.y = (1 - ease) * 0.5;
+      this.modelGroup.scale.set(1.8, 0.05, 1.8);
+      this.mesh.rotation.z = Math.PI * 2;
+    }
+  }
+
+  // Fell in water — sink and bob
+  private updateDrownDeath(t: number): void {
+    if (t < 0.15) {
+      // Quick splash stretch upward
+      const st = t / 0.15;
+      this.modelGroup.scale.set(1 - st * 0.3, 1 + st * 0.4, 1 - st * 0.3);
+      this.modelGroup.position.y = st * 0.15;
+    } else if (t < 0.4) {
+      // Sink down
+      const st = (t - 0.15) / 0.25;
+      const ease = st * st;
+      this.modelGroup.position.y = 0.15 - ease * 0.55;
+      this.modelGroup.scale.set(0.7 + st * 0.1, 1.4 - st * 0.6, 0.7 + st * 0.1);
+      // Tilt forward as if face-planting into water
+      this.modelGroup.rotation.x = st * 0.3;
+    } else if (t < 0.7) {
+      // Bob back up slightly
+      const st = (t - 0.4) / 0.3;
+      const bob = Math.sin(st * Math.PI) * 0.1;
+      this.modelGroup.position.y = -0.4 + bob;
+      this.modelGroup.scale.set(0.8, 0.8, 0.8);
+      this.modelGroup.rotation.x = 0.3 + st * 0.2;
+    } else {
+      // Final sink below surface
+      const st = (t - 0.7) / 0.3;
+      const ease = st * st;
+      this.modelGroup.position.y = -0.3 - ease * 0.4;
+      this.modelGroup.scale.set(0.8 - st * 0.3, 0.8 - st * 0.3, 0.8 - st * 0.3);
+      this.modelGroup.rotation.x = 0.5;
     }
   }
 

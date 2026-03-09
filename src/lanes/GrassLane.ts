@@ -7,6 +7,9 @@ import { createGrassTexture } from '../scene/Textures';
 // Shared geometry/materials across all grass lanes
 const edgeGeo = new THREE.PlaneGeometry(LANE_WIDTH, 0.04);
 const edgeMat = new THREE.MeshStandardMaterial({ color: 0x142e14 });
+const rockGeo = new THREE.BoxGeometry(0.12, 0.06, 0.1);
+const rockColors = [0x1a1a18, 0x222220, 0x181816];
+const rockMats = rockColors.map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.9 }));
 
 export class GrassLane extends Lane {
   private trees: Tree[] = [];
@@ -35,6 +38,18 @@ export class GrassLane extends Lane {
       tree.mesh.position.set(x, 0, 0);
       this.mesh.add(tree.mesh);
       this.trees.push(tree);
+    }
+
+    // Small rock scatter — breaks up flat ground, gives lighting something to catch
+    const rockCount = 3 + Math.floor(Math.random() * 4);
+    for (let i = 0; i < rockCount; i++) {
+      const rx = (Math.random() - 0.5) * 16;
+      const rz = (Math.random() - 0.5) * 0.7;
+      const mat = rockMats[Math.floor(Math.random() * rockMats.length)];
+      const rock = new THREE.Mesh(rockGeo, mat);
+      rock.position.set(rx, 0.03, rz);
+      rock.rotation.y = Math.random() * Math.PI;
+      this.mesh.add(rock);
     }
   }
 
