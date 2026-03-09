@@ -81,7 +81,7 @@ export class RiverLane extends Lane {
 
   isOnLog(player: Player): boolean {
     const px = player.position.x;
-    const playerHalf = 0.3;
+    const playerHalf = 0.18;
 
     for (const log of this.logs) {
       const lx = log.mesh.position.x;
