@@ -9,12 +9,12 @@ export class RailwayLane extends Lane {
   constructor(zIndex: number, direction?: number, waitDuration?: number) {
     super('railway', zIndex);
 
-    // dark gravel strip
-    const strip = this.createStrip(0x424242);
+    // Very dark gravel strip
+    const strip = this.createStrip(0x121212);
     this.mesh.add(strip);
 
     // rails
-    const railMat = new THREE.MeshStandardMaterial({ color: 0x9e9e9e });
+    const railMat = new THREE.MeshStandardMaterial({ color: 0x5a5a5a, metalness: 0.6, roughness: 0.3 });
     for (const zOff of [-0.15, 0.15]) {
       const railGeo = new THREE.BoxGeometry(LANE_WIDTH, 0.06, 0.06);
       const rail = new THREE.Mesh(railGeo, railMat);
@@ -23,7 +23,7 @@ export class RailwayLane extends Lane {
     }
 
     // wooden ties
-    const tieMat = new THREE.MeshStandardMaterial({ color: 0x5d4037 });
+    const tieMat = new THREE.MeshStandardMaterial({ color: 0x2a1a0e });
     const tieGeo = new THREE.BoxGeometry(0.08, 0.03, 0.5);
     for (let x = -LANE_WIDTH / 2; x < LANE_WIDTH / 2; x += 0.5) {
       const tie = new THREE.Mesh(tieGeo, tieMat);

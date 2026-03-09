@@ -18,7 +18,7 @@ export class Train extends Entity {
 
   constructor(direction: number, waitDuration: number) {
     const group = new THREE.Group();
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x546e7a });
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1a1a2e, metalness: 0.4, roughness: 0.5 });
 
     // locomotive
     const locoGeo = new THREE.BoxGeometry(1.2, 0.7, 0.8);
@@ -28,7 +28,7 @@ export class Train extends Entity {
     group.add(loco);
 
     // wagons
-    const wagonMat = new THREE.MeshStandardMaterial({ color: 0x78909c });
+    const wagonMat = new THREE.MeshStandardMaterial({ color: 0x12121e, metalness: 0.3, roughness: 0.6 });
     for (let i = 1; i < TRAIN_LENGTH; i++) {
       const wGeo = new THREE.BoxGeometry(1.0, 0.55, 0.75);
       const w = new THREE.Mesh(wGeo, wagonMat);

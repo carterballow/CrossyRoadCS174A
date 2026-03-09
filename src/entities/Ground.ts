@@ -14,7 +14,7 @@ export class Ground extends Entity {
       GRID_DEPTH * TILE_SIZE,
     );
     const planeMat = new THREE.MeshStandardMaterial({
-      color: 0x4caf50,
+      color: 0x0a0a0a,
       side: THREE.DoubleSide,
     });
     const plane = new THREE.Mesh(planeGeo, planeMat);
@@ -25,8 +25,8 @@ export class Ground extends Entity {
     const grid = new THREE.GridHelper(
       GRID_WIDTH * TILE_SIZE,
       GRID_WIDTH,
-      0x388e3c,
-      0x388e3c,
+      0x111111,
+      0x111111,
     );
     grid.position.y = 0.01;
     group.add(grid);
