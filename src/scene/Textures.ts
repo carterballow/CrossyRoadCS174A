@@ -306,6 +306,28 @@ export function getTrainWagonTexture(): THREE.CanvasTexture {
   return _trainWagonTex;
 }
 
+let _bulletTrainTex: THREE.CanvasTexture | null = null;
+
+export function getBulletTrainTexture(): THREE.CanvasTexture {
+  if (!_bulletTrainTex) {
+    _bulletTrainTex = createCanvasTexture(8, 8, (ctx) => {
+      // Clean white/light grey body with subtle panel variation
+      fillBlockyNoise(ctx, 8, 8, 210, 215, 220, 25, 20, 18);
+      // Panel seam (horizontal darker line)
+      for (let x = 0; x < 8; x++) {
+        ctx.fillStyle = `rgb(${185 + Math.floor(Math.random() * 10)},${190 + Math.floor(Math.random() * 10)},${195 + Math.floor(Math.random() * 10)})`;
+        ctx.fillRect(x, 4, 1, 1);
+      }
+      // Top highlight
+      for (let x = 0; x < 8; x++) {
+        ctx.fillStyle = `rgb(${235 + Math.floor(Math.random() * 15)},${238 + Math.floor(Math.random() * 12)},${240 + Math.floor(Math.random() * 10)})`;
+        ctx.fillRect(x, 0, 1, 1);
+      }
+    }, true);
+  }
+  return _bulletTrainTex;
+}
+
 export function getWheelTexture(): THREE.CanvasTexture {
   if (!_wheelTex) {
     _wheelTex = createCanvasTexture(4, 4, (ctx) => {

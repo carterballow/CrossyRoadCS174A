@@ -40,6 +40,7 @@ export class Game {
   private nextLaneZ = 0;
   private lastLaneType = 'grass';
   private consecutiveCount = 0;
+  private lastRiverDir = 1;
 
   // Idle penalty state
   private lastRowZ = 0;
@@ -173,7 +174,8 @@ export class Game {
       }
       case 'river': {
         const spd = (0.8 + Math.random() * 1.2) * diff;
-        return new RiverLane(z, undefined, spd);
+        this.lastRiverDir *= -1;
+        return new RiverLane(z, this.lastRiverDir, spd);
       }
       case 'grass':
       default:
@@ -271,6 +273,7 @@ export class Game {
 
     this.score = 0;
     this.maxZ = 0;
+    this.lastRiverDir = 1;
     this.lastRowZ = 0;
     this.rowIdleTime = 0;
     this.idlePenaltyAccum = 0;
