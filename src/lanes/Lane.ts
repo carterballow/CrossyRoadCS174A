@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import {Player} from "../entities/Player";
-export const LANE_WIDTH = 20;
+export const LANE_WIDTH = 50;
 
-export type LaneType = 'grass' | 'road' | 'railway';
+export type LaneType = 'grass' | 'road' | 'railway' | 'river';
 
 export abstract class Lane {
   readonly mesh: THREE.Group;
@@ -16,9 +16,13 @@ export abstract class Lane {
     this.mesh.position.z = zIndex;
   }
 
-  protected createStrip(color: number): THREE.Mesh {
+  protected createStrip(color: number, texture?: THREE.Texture): THREE.Mesh {
     const geo = new THREE.PlaneGeometry(LANE_WIDTH, 1);
-    const mat = new THREE.MeshStandardMaterial({ color });
+    const matOptions: THREE.MeshStandardMaterialParameters = { color };
+    if (texture) {
+      matOptions.map = texture;
+    }
+    const mat = new THREE.MeshStandardMaterial(matOptions);
     const strip = new THREE.Mesh(geo, mat);
     strip.rotation.x = -Math.PI / 2;
     strip.receiveShadow = true;
