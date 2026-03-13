@@ -20,6 +20,68 @@ const CAR_X_TRIGGER = 2.0;
 // Seconds between car sound triggers
 const CAR_COOLDOWN = 0.4;
 
+// 3D audio distance model parameters
+const REF_DISTANCE = 1;     // distance at which volume is full
+const MAX_DISTANCE = 20;    // beyond this, sound is silent
+const ROLLOFF = 1.5;        // how fast volume drops with distance
+
+/** Create an HRTF-based 3D panner node */
+function createSpatialPanner(ctx: AudioContext): PannerNode {
+  const panner = ctx.createPanner();
+  panner.panningModel = 'HRTF';
+  panner.distanceModel = 'inverse';
+  panner.refDistance = REF_DISTANCE;
+  panner.maxDistance = MAX_DISTANCE;
+  panner.rolloffFactor = ROLLOFF;
+  panner.coneInnerAngle = 360;
+  panner.coneOuterAngle = 360;
+  panner.coneOuterGain = 1;
+  return panner;
+}
+
+/** Position a PannerNode in 3D space (game coords: x=left/right, z=forward) */
+function setPannerPos(panner: PannerNode, x: number, y: number, z: number): void {
+  if (panner.positionX) {
+    // Modern API — smooth interpolation
+    const t = panner.context.currentTime;
+    panner.positionX.setTargetAtTime(x, t, 0.02);
+    panner.positionY.setTargetAtTime(y, t, 0.02);
+    panner.positionZ.setTargetAtTime(z, t, 0.02);
+  } else {
+    panner.setPosition(x, y, z);
+  }
+}
+
+/** Update the AudioListener to match the player's position */
+function setListenerPos(ctx: AudioContext, x: number, y: number, z: number): void {
+  const L = ctx.listener;
+  if (L.positionX) {
+    const t = ctx.currentTime;
+    L.positionX.setTargetAtTime(x, t, 0.02);
+    L.positionY.setTargetAtTime(y, t, 0.02);
+    L.positionZ.setTargetAtTime(z, t, 0.02);
+  } else {
+    L.setPosition(x, y, z);
+  }
+}
+
+/** Set listener orientation — facing +Z (forward in game), up is +Y */
+function setListenerOrientation(ctx: AudioContext): void {
+  const L = ctx.listener;
+  if (L.forwardX) {
+    // Forward: looking toward +Z (direction player walks)
+    L.forwardX.value = 0;
+    L.forwardY.value = 0;
+    L.forwardZ.value = 1;
+    // Up: +Y
+    L.upX.value = 0;
+    L.upY.value = 1;
+    L.upZ.value = 0;
+  } else {
+    L.setOrientation(0, 0, 1, 0, 1, 0);
+  }
+}
+
 export class AudioManager {
   private ctx: AudioContext | null = null;
 
@@ -27,14 +89,16 @@ export class AudioManager {
   private warnOsc: OscillatorNode | null = null;
   private warnLfo: OscillatorNode | null = null;
   private warnGain: GainNode | null = null;
-  private warnPanner: StereoPannerNode | null = null;
+  private warnPanner: PannerNode | null = null;
 
   // Persistent train rumble (while crossing)
   private rumbleOsc: OscillatorNode | null = null;
+  private rumbleOsc2: OscillatorNode | null = null;
   private rumbleGain: GainNode | null = null;
-  private rumblePanner: StereoPannerNode | null = null;
+  private rumblePanner: PannerNode | null = null;
 
   private carCooldown = 0;
+  private orientationSet = false;
 
   resume(): void {
     if (!this.ctx) this.ctx = new AudioContext();
@@ -50,6 +114,15 @@ export class AudioManager {
   ): void {
     if (!this.ctx) return;
 
+    // Set listener orientation once (it doesn't change)
+    if (!this.orientationSet) {
+      setListenerOrientation(this.ctx);
+      this.orientationSet = true;
+    }
+
+    // Move the listener to the player's position (y=0, ground level)
+    setListenerPos(this.ctx, playerX, 0, playerZ);
+
     this.carCooldown = Math.max(0, this.carCooldown - delta);
 
     // ---- Train warning bell ----
@@ -60,17 +133,15 @@ export class AudioManager {
     });
 
     if (warningTrain && !this.warnOsc) {
-      this.startTrainWarning(warningTrain.direction);
+      this.startTrainWarning();
     } else if (!warningTrain && this.warnOsc) {
       this.stopTrainWarning();
     }
-    if (this.warnGain && this.warnPanner && warningTrain) {
-      const dz = warningTrain.laneZ - playerZ;
-      // Volume drops linearly with distance ahead
-      const distVol = Math.max(0, 1 - dz / TRAIN_AHEAD_MAX);
-      this.warnGain.gain.setTargetAtTime(0.28 * distVol, this.ctx.currentTime, 0.1);
-      const pan = Math.max(-1, Math.min(1, (warningTrain.x - playerX) / 14));
-      this.warnPanner.pan.setTargetAtTime(pan, this.ctx.currentTime, 0.05);
+    if (this.warnPanner && warningTrain) {
+      // Position the bell at the train's signal post location
+      // Offset X by direction so the bell comes from the side the train approaches
+      const bellX = warningTrain.x - warningTrain.direction * 6;
+      setPannerPos(this.warnPanner, bellX, 1.5, warningTrain.laneZ);
     }
 
     // ---- Train crossing rumble ----
@@ -85,12 +156,9 @@ export class AudioManager {
     } else if (!crossingTrain && this.rumbleOsc) {
       this.stopTrainRumble();
     }
-    if (this.rumbleGain && this.rumblePanner && crossingTrain) {
-      const dz = crossingTrain.laneZ - playerZ;
-      const distVol = dz === 0 ? 1.0 : 0.5;
-      this.rumbleGain.gain.setTargetAtTime(0.4 * distVol, this.ctx.currentTime, 0.08);
-      const pan = Math.max(-1, Math.min(1, (crossingTrain.x - playerX) / 14));
-      this.rumblePanner.pan.setTargetAtTime(pan, this.ctx.currentTime, 0.05);
+    if (this.rumblePanner && crossingTrain) {
+      // Position the rumble at the train body itself — moves with it
+      setPannerPos(this.rumblePanner, crossingTrain.x, 0, crossingTrain.laneZ);
     }
 
     // ---- Car pass (subtle) ----
@@ -104,8 +172,7 @@ export class AudioManager {
         return dz <= 1 && dx < CAR_X_TRIGGER && movingToward;
       });
       if (nearCar) {
-        const pan = Math.max(-1, Math.min(1, (nearCar.x - playerX) / 5));
-        this.playCarPass(pan, nearCar.speed);
+        this.playCarPass(nearCar.x, nearCar.laneZ, nearCar.speed);
         this.carCooldown = CAR_COOLDOWN;
       }
     }
@@ -116,7 +183,7 @@ export class AudioManager {
     const ctx = this.ctx;
     if (!ctx) return;
 
-    // Quick pitch-up sine sweep — a soft cartoon hop
+    // Quick pitch-up sine sweep — plays at listener position (no spatialization needed)
     const osc = ctx.createOscillator();
     osc.type = 'sine';
     osc.frequency.setValueAtTime(320, ctx.currentTime);
@@ -137,7 +204,7 @@ export class AudioManager {
     const ctx = this.ctx;
     if (!ctx) return;
 
-    // White noise through a lowpass for a watery splat
+    // White noise through a lowpass for a watery splat — at player feet
     const bufSize = Math.ceil(ctx.sampleRate * 0.35);
     const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);
@@ -184,16 +251,19 @@ export class AudioManager {
 
   // ------------------------------------------------------------------
   //  Train warning bell: LFO-chopped sine — ding ding ding
+  //  Now placed in 3D space via HRTF PannerNode
   // ------------------------------------------------------------------
-  private startTrainWarning(direction: number): void {
+  private startTrainWarning(): void {
     const ctx = this.ctx!;
 
-    const panner = ctx.createStereoPanner();
-    panner.pan.value = direction > 0 ? -0.85 : 0.85;
+    const panner = createSpatialPanner(ctx);
+    panner.refDistance = 2;
+    panner.maxDistance = 25;
+    panner.rolloffFactor = 1.2;
     panner.connect(ctx.destination);
 
     const gain = ctx.createGain();
-    gain.gain.value = 0; // will be set by update()
+    gain.gain.value = 0.28;
     gain.connect(panner);
 
     const osc = ctx.createOscillator();
@@ -229,11 +299,15 @@ export class AudioManager {
 
   // ------------------------------------------------------------------
   //  Train crossing rumble: sawtooth → lowpass — heavy freight sound
+  //  3D positioned at the moving train body
   // ------------------------------------------------------------------
   private startTrainRumble(): void {
     const ctx = this.ctx!;
 
-    const panner = ctx.createStereoPanner();
+    const panner = createSpatialPanner(ctx);
+    panner.refDistance = 1;
+    panner.maxDistance = 15;
+    panner.rolloffFactor = 1.0;
     panner.connect(ctx.destination);
 
     const gain = ctx.createGain();
@@ -264,6 +338,7 @@ export class AudioManager {
     osc2.start();
 
     this.rumbleOsc = osc;
+    this.rumbleOsc2 = osc2;
     this.rumbleGain = gain;
     this.rumblePanner = panner;
   }
@@ -272,14 +347,15 @@ export class AudioManager {
     const ctx = this.ctx!;
     if (this.rumbleGain) this.rumbleGain.gain.setTargetAtTime(0, ctx.currentTime, 0.18);
     const osc = this.rumbleOsc;
-    setTimeout(() => osc?.stop(), 600);
-    this.rumbleOsc = this.rumbleGain = this.rumblePanner = null;
+    const osc2 = this.rumbleOsc2;
+    setTimeout(() => { osc?.stop(); osc2?.stop(); }, 600);
+    this.rumbleOsc = this.rumbleOsc2 = this.rumbleGain = this.rumblePanner = null;
   }
 
   // ------------------------------------------------------------------
-  //  Car pass: subtle bandpass noise burst — very soft whoosh
+  //  Car pass: bandpass noise burst — 3D positioned at the car
   // ------------------------------------------------------------------
-  private playCarPass(pan: number, speed: number): void {
+  private playCarPass(carX: number, carZ: number, speed: number): void {
     const ctx = this.ctx!;
 
     const duration = 0.12;
@@ -296,12 +372,14 @@ export class AudioManager {
     bpf.frequency.value = 400 + speed * 30;
     bpf.Q.value = 1.2;
 
-    const panner = ctx.createStereoPanner();
-    panner.pan.value = pan;
+    const panner = createSpatialPanner(ctx);
+    panner.refDistance = 0.8;
+    panner.maxDistance = 8;
+    panner.rolloffFactor = 2;
+    setPannerPos(panner, carX, 0, carZ);
 
     const gain = ctx.createGain();
-    // Very subtle — just a hint of sound, not a big whoosh
-    gain.gain.setValueAtTime(0.07, ctx.currentTime);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
 
     src.connect(bpf);
