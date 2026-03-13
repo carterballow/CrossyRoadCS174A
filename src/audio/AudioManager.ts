@@ -429,14 +429,14 @@ export class AudioManager {
       if (d < nearestDist) { nearestDist = d; nearest = c; }
     }
 
-    const inRange = nearest && nearestDist < 8;
+    const inRange = nearest && nearestDist < 12;
 
     if (inRange && !this.carLoop && this.buffers.carPass) {
       const panner = createSpatialPanner(ctx);
-      panner.refDistance = 1;
-      panner.maxDistance = 10;
-      panner.rolloffFactor = 1.5;
-      this.carLoop = startLoop(ctx, this.buffers.carPass, 0.2, panner);
+      panner.refDistance = 2;
+      panner.maxDistance = 14;
+      panner.rolloffFactor = 1.0;
+      this.carLoop = startLoop(ctx, this.buffers.carPass, 0.45, panner);
     } else if (!inRange && this.carLoop) {
       this.carLoop = stopLoop(this.carLoop, ctx);
     }
