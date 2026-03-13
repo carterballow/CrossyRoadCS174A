@@ -420,6 +420,7 @@ export class Game {
 
     const trains: import('../audio/AudioManager').TrainAudioInfo[] = [];
     const cars: import('../audio/AudioManager').CarAudioInfo[] = [];
+    const riverZs: number[] = [];
 
     for (const [z, lane] of this.laneMap) {
       if (lane.type === 'railway') {
@@ -428,10 +429,12 @@ export class Game {
       } else if (lane.type === 'road') {
         const carInfos = (lane as RoadLane).getCarAudioInfo();
         for (const c of carInfos) cars.push({ ...c, laneZ: z });
+      } else if (lane.type === 'river') {
+        riverZs.push(z);
       }
     }
 
-    this.audio.update(playerX, playerZ, trains, cars, delta);
+    this.audio.update(playerX, playerZ, trains, cars, riverZs, delta);
   }
 
   private updateCamera(delta?: number): void {

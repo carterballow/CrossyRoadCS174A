@@ -125,8 +125,8 @@ export class RoadLane extends Lane {
     this.puddleMat = scatterPuddles(this.mesh);
   }
 
-  getCarAudioInfo(): { x: number; speed: number; direction: number }[] {
-    return this.cars.map(c => ({ x: c.mesh.position.x, speed: c.speed, direction: c.direction }));
+  getCarAudioInfo(): { x: number; speed: number; direction: number; variant: import('../entities/Car').CarVariant }[] {
+    return this.cars.map(c => ({ x: c.mesh.position.x, speed: c.speed, direction: c.direction, variant: c.variant }));
   }
 
   checkCollision(player: Player): boolean {
