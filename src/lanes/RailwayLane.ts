@@ -71,6 +71,11 @@ export class RailwayLane extends Lane {
     this.mesh.add(sig2);
   }
 
+  getTrainAudioInfo(): { x: number; isWarning: boolean; isCrossing: boolean; direction: number } {
+    const state = this.train.getState();
+    return { ...state, direction: this.trainDir };
+  }
+
   checkCollision(player: Player): boolean {
     const pz = Math.round(player.position.z);
     if (pz !== this.zIndex) return false;

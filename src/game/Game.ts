@@ -10,6 +10,7 @@ import { RiverLane } from '../lanes/RiverLane';
 import { HUD } from '../ui/HUD';
 import { ParticleSystem } from '../entities/Particles';
 import { Rain } from '../entities/Rain';
+import { AudioManager } from '../audio/AudioManager';
 
 const CAM_OFFSET = new THREE.Vector3(0, 3.5, -4.0);
 const CAM_LOOK_OFFSET = new THREE.Vector3(0, 0.5, 4);
@@ -31,10 +32,16 @@ export class Game {
   private particles: ParticleSystem;
   private rain: Rain;
 
+  private audio: AudioManager;
+
   private state: GameState = 'menu';
   private score = 0;
   private highScore = 0;
   private maxZ = 0;
+
+  // Screen shake state
+  private shakeIntensity = 0;
+  private shakeDecay = 0;
 
   // Procedural generation state
   private nextLaneZ = 0;
@@ -54,6 +61,7 @@ export class Game {
     this.particles = new ParticleSystem(this.sceneMgr.scene);
     this.rain = new Rain();
     this.sceneMgr.scene.add(this.rain.group);
+    this.audio = new AudioManager();
 
     this.highScore = this.loadHighScore();
 
@@ -237,6 +245,7 @@ export class Game {
     this.manageLanes();
     this.checkDeathCollisions();
     this.checkOutOfBounds();
+    this.updateAudio(delta);
 
     this.rain.update(delta, this.sceneMgr.camera.position);
     this.updateCamera(delta);
@@ -251,6 +260,7 @@ export class Game {
 
   private handleMenuInput(): void {
     if (this.input.anyJustPressed()) {
+      this.audio.resume();
       this.state = 'playing';
       this.hud.showPlaying();
     }
@@ -311,6 +321,10 @@ export class Game {
   private die(type: 'squash' | 'drown'): void {
     this.state = 'dying';
     this.player.playDeath(type);
+    this.shakeIntensity = 0.18;
+    this.shakeDecay = 6.0;
+    if (type === 'squash') this.audio.playImpact();
+    else this.audio.playSplash();
   }
 
   private finishDeath(): void {
@@ -360,6 +374,7 @@ export class Game {
       if (blocked) return;
     }
     this.player.move(dx, dz);
+    this.audio.playJump();
   }
 
   private handleLogRiding(delta: number): void {
@@ -399,6 +414,26 @@ export class Game {
     }
   }
 
+  private updateAudio(delta: number): void {
+    const playerX = this.player.position.x;
+    const playerZ = Math.round(this.player.position.z);
+
+    const trains: import('../audio/AudioManager').TrainAudioInfo[] = [];
+    const cars: import('../audio/AudioManager').CarAudioInfo[] = [];
+
+    for (const [z, lane] of this.laneMap) {
+      if (lane.type === 'railway') {
+        const info = (lane as RailwayLane).getTrainAudioInfo();
+        trains.push({ ...info, laneZ: z });
+      } else if (lane.type === 'road') {
+        const carInfos = (lane as RoadLane).getCarAudioInfo();
+        for (const c of carInfos) cars.push({ ...c, laneZ: z });
+      }
+    }
+
+    this.audio.update(playerX, playerZ, trains, cars, delta);
+  }
+
   private updateCamera(delta?: number): void {
     const cam = this.sceneMgr.camera;
     const p = this.player.position;
@@ -415,6 +450,15 @@ export class Game {
       cam.position.lerp(targetPos, t);
     } else {
       cam.position.copy(targetPos);
+    }
+
+    // Screen shake — decays exponentially after a hit
+    if (this.shakeIntensity > 0.001) {
+      cam.position.x += (Math.random() - 0.5) * this.shakeIntensity;
+      cam.position.y += (Math.random() - 0.5) * this.shakeIntensity;
+      this.shakeIntensity *= Math.exp(-this.shakeDecay * (delta ?? 0.016));
+    } else {
+      this.shakeIntensity = 0;
     }
 
     cam.lookAt(

@@ -176,6 +176,14 @@ export class Train extends Entity {
     this.signalLight.position.y = 0.4;
   }
 
+  getState(): { x: number; isWarning: boolean; isCrossing: boolean } {
+    return {
+      x: this.mesh.position.x,
+      isWarning: !this.crossing && this.waitTimer > this.waitDuration - 1,
+      isCrossing: this.crossing,
+    };
+  }
+
   update(delta: number): void {
     if (this.crossing) {
       this.mesh.position.x += this.direction * TRAIN_SPEED * delta;

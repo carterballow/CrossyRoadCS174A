@@ -125,6 +125,10 @@ export class RoadLane extends Lane {
     this.puddleMat = scatterPuddles(this.mesh);
   }
 
+  getCarAudioInfo(): { x: number; speed: number; direction: number }[] {
+    return this.cars.map(c => ({ x: c.mesh.position.x, speed: c.speed, direction: c.direction }));
+  }
+
   checkCollision(player: Player): boolean {
     const pz = Math.round(player.position.z);
     if (pz !== this.zIndex) return false;
