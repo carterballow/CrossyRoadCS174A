@@ -29,7 +29,7 @@ Navigate a low poly chicken through an infinite, procedurally generated lanes in
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18 or later recommended)
+- [Node.js](https://nodejs.org/
 - npm (comes with Node)
 
 ### Installation
@@ -48,7 +48,7 @@ npm run dev
 
 Then open your browser and go to: **http://localhost:5173**
 
-> 🎧 Headphones recommended — the game uses HRTF binaural spatial audio.
+> 🎧 Headphones recommended
 
 ---
 
@@ -63,50 +63,11 @@ Then open your browser and go to: **http://localhost:5173**
 | Any key | Start game / restart after death |
 
 - **Goal:** Reach the highest row number before dying.
-- **Grass lanes** are safe — trees and rocks block movement.
+- **Grass lanes** are safe, trees and rocks block movement.
 - **Road lanes** have cars. Police chase lanes spawn a supercar + police car in pursuit.
 - **Railway lanes** have trains. Watch for flashing warning lights. Bullet trains move ~3× faster.
 - **River lanes** — hop on logs to survive. Drift off screen = death.
-- **Idle penalty:** Standing still for more than 5 seconds drains your score at 1 pt/sec.
 - Your **high score** is saved in the browser.
-
----
-
-## Features
-
-- **Procedural generation** — infinite lanes with tuned difficulty scaling
-- **Custom GLSL water shader** — 6-layer wave simulation, caustics, Fresnel reflection, foam, rain ripples
-- **Wet ground / puddle shader** — animated splash ripples with normal perturbation
-- **HRTF 3D spatial audio** — vehicles are audible before they appear on screen
-- **AABB collision detection** — per-frame checks for vehicles, trains, and logs
-- **Particle system** — squash + red burst on vehicle death, splash + blue arc on drowning
-- **UnrealBloom post-processing** — every light source glows into the scene
-- **Instanced rain system** — 200 animated rain drops synchronized with puddle shaders
-- **Police chase lane** — original mechanic not in the source game
-- **Bullet train variant** — sleeker geometry, early audio warning, ~3× speed
-- **Difficulty curve** — `difficulty = min(4.0, 1 + max(0, Z) × 0.065)`
-
----
-
-## Project Structure
-
-```
-CrossyRoadCS174A/
-├── src/
-│   ├── main.ts          # Entry point
-│   ├── game/            # Game loop, state machine
-│   ├── lanes/           # Lane generation & types
-│   ├── entities/        # Player, vehicles, trains, logs
-│   ├── shaders/         # GLSL water + puddle shaders
-│   ├── audio/           # AudioManager, HRTF setup
-│   └── particles/       # Particle system archetypes
-├── public/              # Static assets
-├── index.html
-├── vite.config.ts
-└── tsconfig.json
-```
-
-> Note: folder structure is approximate — update if yours differs.
 
 ---
 
@@ -116,7 +77,7 @@ The project is deployed on **Vercel**. To deploy your own fork:
 
 1. Push your repo to GitHub
 2. Go to [vercel.com](https://vercel.com) and import the repo
-3. Vercel will auto-detect Vite — just click **Deploy**
+3. Vercel will detect Vite, so just click **Deploy**
 
 ---
 
