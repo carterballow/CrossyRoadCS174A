@@ -16,9 +16,9 @@ Navigate a low poly chicken through an infinite, procedurally generated lanes in
 
 | Tool | Purpose |
 |------|---------|
-| [Three.js](https://threejs.org/) | 3D rendering, shaders, scene graph |
+| Three.js | 3D rendering, shaders, scene graph |
 | TypeScript | Primary language |
-| [Vite](https://vitejs.dev/) | Dev server & bundler |
+| Vite | Dev server & bundler |
 | Web Audio API | HRTF spatial audio & sound synthesis |
 | GLSL | Custom water + puddle shaders |
 | Vercel | Deployment |
@@ -29,8 +29,7 @@ Navigate a low poly chicken through an infinite, procedurally generated lanes in
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/
-- npm (comes with Node)
+- [Node.js](https://nodejs.org/)
 
 ### Installation
 
